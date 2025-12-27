@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Algorithm Crawler: Immortal Evolution</title>
+    <title>Algorithm Crawler: Neural Evolution</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body {
@@ -30,13 +30,14 @@
         }
         .stat { font-size: 14px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); color: #00ffcc; }
         .lvl { font-size: 20px; color: #ff0032; }
+        .xp-text { color: #00ff00; font-size: 14px; }
         
         /* Control Buttons */
         .ctrl-btn {
             position: absolute;
             right: 40px;
-            width: 70px;
-            height: 70px;
+            width: 75px;
+            height: 75px;
             border: 2px solid #fff;
             border-radius: 50%;
             display: none; 
@@ -50,21 +51,21 @@
         }
         
         #boost-btn { display: flex; bottom: 40px; background: rgba(255, 0, 50, 0.6); }
-        #beam-btn { bottom: 125px; background: rgba(0, 255, 255, 0.6); }
-        #toast-btn { bottom: 210px; background: rgba(255, 165, 0, 0.6); }
+        #beam-btn { bottom: 130px; background: rgba(0, 255, 255, 0.6); }
+        #toast-btn { bottom: 220px; background: rgba(255, 165, 0, 0.6); }
         #inv-toggle { 
             position: absolute; 
             bottom: 40px; 
             left: 40px; 
-            width: 60px; 
-            height: 60px; 
+            width: 65px; 
+            height: 65px; 
             background: #222; 
             border: 1px solid #00ffcc; 
-            border-radius: 10px; 
+            border-radius: 12px; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: 24px; 
+            font-size: 28px; 
             pointer-events: auto; 
             z-index: 30;
         }
@@ -101,6 +102,7 @@
             font-size: 24px;
             letter-spacing: 3px;
             z-index: 5;
+            text-shadow: 0 0 10px #00ffcc;
         }
     </style>
 </head>
@@ -108,9 +110,10 @@
 
 <div id="ui">
     <div class="stat lvl">TRAINING LAYER: <span id="level">1</span> / 20</div>
+    <div class="stat xp-text">EVOLUTION PROGRESS: <span id="xp-current">0</span> / <span id="xp-needed">5</span> Orbs</div>
     <div class="stat">System Integrity: <span id="hp">100</span>%</div>
     <div class="stat">Souls: <span id="score">0</span></div>
-    <div class="stat">Species IQ: <span id="ai-iq">5</span>%</div>
+    <div class="stat">Species IQ: <span id="ai-iq">1</span>%</div>
 </div>
 
 <div id="msg">VIRAL STATUS ACHIEVED</div>
@@ -156,6 +159,8 @@
     const scoreEl = document.getElementById('score');
     const levelEl = document.getElementById('level');
     const iqEl = document.getElementById('ai-iq');
+    const xpCurEl = document.getElementById('xp-current');
+    const xpNeedEl = document.getElementById('xp-needed');
     const boostBtn = document.getElementById('boost-btn');
     const beamBtn = document.getElementById('beam-btn');
     const toastBtn = document.getElementById('toast-btn');
@@ -176,7 +181,7 @@
     let player = { 
         x: width/2, y: height/2, r: 18, 
         hp: 100, maxHp: 100,
-        souls: 0, level: 1, xp: 0,
+        souls: 0, level: 1, xp: 0, xpNeeded: 5,
         speed: 5, dmg: 1,
         inventory: { scraps: 0, gems: 0 },
         upgrades: { speed: 1, hp: 1, dmg: 1 }
@@ -195,9 +200,10 @@
     }
 
     // --- Game Logic ---
-    let BULLET_SPEED = 6;
+    let BULLET_SPEED = 7;
     const SEEK_FORCE = 0.15;
-    let speciesDNA = { dodgeWeight: 0.05, mutationRate: 0.01 }; 
+    // NERFED AI: 80% slower growth
+    let speciesDNA = { dodgeWeight: 0.01, mutationRate: 0.002 }; 
 
     let enemies = [];
     let bullets = [];
@@ -295,7 +301,9 @@
         document.getElementById('menu-souls-val').innerText = Math.floor(player.souls);
         hpEl.innerText = Math.floor(player.hp);
         levelEl.innerText = player.level;
-        iqEl.innerText = Math.floor(speciesDNA.dodgeWeight * 100);
+        iqEl.innerText = Math.max(1, Math.floor(speciesDNA.dodgeWeight * 100));
+        xpCurEl.innerText = player.xp;
+        xpNeedEl.innerText = player.xpNeeded;
         
         document.getElementById('inv-scraps').innerText = player.inventory.scraps;
         document.getElementById('inv-gems').innerText = player.inventory.gems;
@@ -303,7 +311,6 @@
         document.getElementById('up-hp-lvl').innerText = player.upgrades.hp;
         document.getElementById('up-dmg-lvl').innerText = player.upgrades.dmg;
 
-        // Update Upgrade Costs in Menu
         document.getElementById('btn-speed-cost').innerText = `Cost: ${100 * player.upgrades.speed} Souls`;
         document.getElementById('btn-hp-cost').innerText = `Cost: ${150 * player.upgrades.hp} Souls`;
         document.getElementById('btn-dmg-cost').innerText = `Cost: ${200 * player.upgrades.dmg} Souls`;
@@ -347,11 +354,11 @@
     }
 
     function spawnEnemy() {
-        if (enemies.length < 5 + player.level * 2) {
+        if (enemies.length < 5 + player.level * 1.5) {
             const angle = Math.random() * Math.PI * 2;
             const dist = Math.max(width, height);
-            const calculatedSpeed = 1.0 + (player.level * 0.08);
-            const finalSpeed = Math.min(player.speed - 0.5, calculatedSpeed);
+            const calculatedSpeed = 1.0 + (player.level * 0.05);
+            const finalSpeed = Math.min(player.speed - 0.8, calculatedSpeed);
             
             enemies.push({
                 x: player.x + Math.cos(angle) * dist,
@@ -360,17 +367,25 @@
                 speed: finalSpeed,
                 dna: { ...speciesDNA },
                 burning: 0,
-                hp: 1 + (player.level * 0.5)
+                hp: 1 + (player.level * 0.3)
             });
         }
+    }
+
+    function spawnGreenOrb() {
+        // Bright Green leveling balls spawn randomly
+        loots.push({ 
+            x: Math.random() * (width - 40) + 20, 
+            y: Math.random() * (height - 40) + 20, 
+            type: 'xpOrb', 
+            life: 1200 
+        });
     }
 
     function dropLoot(x, y) {
         const rand = Math.random();
         let type = 'scrap';
-        // Node Spawn (The Level Up Box)
-        if (rand > 0.85) type = 'node'; 
-        else if (rand > 0.97) type = 'gem';
+        if (rand > 0.95) type = 'gem';
         loots.push({ x, y, type, life: 600 });
     }
 
@@ -390,9 +405,9 @@
             if (Math.hypot(player.x - l.x, player.y - l.y) < player.r + 15) {
                 if(l.type === 'scrap') player.inventory.scraps++;
                 if(l.type === 'gem') player.inventory.gems++;
-                if(l.type === 'node') {
+                if(l.type === 'xpOrb') {
                     player.xp++;
-                    if(player.xp >= 5) levelUp();
+                    if(player.xp >= player.xpNeeded) levelUp();
                 }
                 player.souls += 10;
                 loots.splice(li, 1);
@@ -444,11 +459,12 @@
             });
 
             const angleToPlayer = Math.atan2(player.y - en.y, player.x - en.x);
+            // AI Movement logic with nerfed dodge
             en.x += Math.cos(angleToPlayer) * en.speed + (dangerX * en.dna.dodgeWeight * 5);
             en.y += Math.sin(angleToPlayer) * en.speed + (dangerY * en.dna.dodgeWeight * 5);
 
             if (Math.hypot(player.x - en.x, player.y - en.y) < player.r + en.r) {
-                player.hp -= 5; updateUI(); enemies.splice(ei, 1);
+                player.hp -= 3; updateUI(); enemies.splice(ei, 1);
             }
 
             bullets.forEach((b, bi) => {
@@ -456,7 +472,8 @@
                     en.hp -= player.dmg;
                     bullets.splice(bi, 1);
                     if(en.hp <= 0) {
-                        speciesDNA.dodgeWeight = Math.min(0.5, speciesDNA.dodgeWeight + speciesDNA.mutationRate);
+                        // AI capped at 0.1 (10% IQ) for balance
+                        speciesDNA.dodgeWeight = Math.min(0.1, speciesDNA.dodgeWeight + speciesDNA.mutationRate);
                         dropLoot(en.x, en.y);
                         enemies.splice(ei, 1);
                         player.souls += 10;
@@ -472,8 +489,10 @@
     function levelUp() {
         player.level++; 
         player.xp = 0;
+        player.xpNeeded = 5 + (player.level * 2); // XP Requirement increases
+        
         if (player.level >= 20) { resetGame(true); return; }
-        levelEl.innerText = player.level;
+        
         updateUI();
         saveGame();
         msg.style.opacity = 1;
@@ -483,11 +502,11 @@
 
     function resetGame(victory) {
         if (victory) {
-            alert("CONGRATULATIONS! You have evolved into the Perfect Algorithm.");
+            alert("CONGRATULATIONS! You reached Level 20. Evolution Complete.");
             localStorage.clear();
             location.reload();
         } else {
-            alert("The Model Collapsed! Final Souls: " + Math.floor(player.souls));
+            alert("Model Collapse! Souls Saved. System Integrity Reset.");
             player.hp = player.maxHp; 
             player.xp = 0;
             enemies = []; bullets = []; loots = [];
@@ -500,16 +519,21 @@
         ctx.fillRect(0, 0, width, height);
 
         if (joystick.active) {
-            ctx.strokeStyle = 'rgba(0, 255, 204, 0.2)';
+            ctx.strokeStyle = 'rgba(0, 255, 204, 0.15)';
             ctx.beginPath(); ctx.arc(joystick.startX, joystick.startY, 40, 0, Math.PI*2); ctx.stroke();
         }
 
         loots.forEach(l => {
-            // Visualize nodes as White level-up boxes
-            ctx.fillStyle = l.type === 'gem' ? '#ff00ff' : l.type === 'node' ? '#ffffff' : '#aaa';
-            ctx.shadowBlur = l.type === 'node' ? 10 : 0;
-            ctx.shadowColor = '#fff';
-            ctx.fillRect(l.x - 5, l.y - 5, 12, 12);
+            // Bright Green Balls for XP
+            if(l.type === 'xpOrb') {
+                ctx.fillStyle = '#00ff00';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#00ff00';
+                ctx.beginPath(); ctx.arc(l.x, l.y, 8, 0, Math.PI*2); ctx.fill();
+            } else {
+                ctx.fillStyle = l.type === 'gem' ? '#ff00ff' : '#aaa';
+                ctx.fillRect(l.x - 5, l.y - 5, 10, 10);
+            }
             ctx.shadowBlur = 0;
         });
 
@@ -545,6 +569,8 @@
         update();
         draw();
         if (!isPaused && Math.random() < 0.03) spawnEnemy();
+        // Spawn Green XP balls periodically
+        if (!isPaused && Math.random() < 0.01) spawnGreenOrb();
         requestAnimationFrame(loop);
     }
 
