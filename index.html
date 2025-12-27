@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Algorithm Crawler Pro</title>
+    <title>Algorithm Crawler: Neural Siege</title>
     <link rel="manifest" href="manifest.json">
     <style>
         body {
@@ -28,7 +28,8 @@
             pointer-events: none;
             z-index: 10;
         }
-        .stat { font-size: 18px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .stat { font-size: 16px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); color: #00ffcc; }
+        .lvl { font-size: 24px; color: #ff0032; }
         #boost-btn {
             position: absolute;
             bottom: 60px;
@@ -44,17 +45,32 @@
             font-weight: bold;
             z-index: 20;
             box-shadow: 0 0 20px rgba(255,0,0,0.3);
-            active: scale(0.9);
+        }
+        #msg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+            font-size: 32px;
+            font-weight: 100;
+            letter-spacing: 5px;
         }
     </style>
 </head>
 <body>
 
 <div id="ui">
+    <div class="stat lvl">TRAINING LEVEL: <span id="level">1</span></div>
     <div class="stat">System Integrity: <span id="hp">100</span>%</div>
     <div class="stat">Watch Time: <span id="score">0</span>s</div>
+    <div class="stat">Species IQ: <span id="ai-iq">0</span>%</div>
 </div>
 
+<div id="msg">VIRAL STATUS ACHIEVED</div>
 <div id="boost-btn">BOOST</div>
 <canvas id="gameCanvas"></canvas>
 
@@ -63,7 +79,10 @@
     const ctx = canvas.getContext('2d');
     const hpEl = document.getElementById('hp');
     const scoreEl = document.getElementById('score');
+    const levelEl = document.getElementById('level');
+    const iqEl = document.getElementById('ai-iq');
     const boostBtn = document.getElementById('boost-btn');
+    const msg = document.getElementById('msg');
 
     let width, height;
     function resize() {
@@ -77,23 +96,26 @@
     resize();
 
     // --- Game Logic Constants ---
-    const PLAYER_SPEED = 5;
-    const BULLET_SPEED = 6;
-    const SEEK_FORCE = 0.15; // How fast bullets turn
+    let PLAYER_SPEED = 5;
+    let BULLET_SPEED = 6;
+    const SEEK_FORCE = 0.15;
+
+    // --- Neural Network Global Species Weights ---
+    // These evolve as you kill enemies. 
+    // Weight 1: Dodge incoming bullets. Weight 2: Flank player.
+    let speciesDNA = { dodgeWeight: 0.1, flankWeight: 0.5, mutationRate: 0.05 };
 
     // --- State ---
-    let player = { x: width/2, y: height/2, r: 18, hp: 100, score: 0 };
+    let player = { x: width/2, y: height/2, r: 18, hp: 100, score: 0, level: 1, xp: 0 };
     let enemies = [];
     let bullets = [];
+    let nodes = []; // Engagement Nodes (The Purpose)
     
-    // Multi-touch Tracking
-    let touches = {}; 
     let joystick = { active: false, id: null, startX: 0, startY: 0, currX: 0, currY: 0, dirX: 0, dirY: 0 };
 
     // --- Input Handling ---
     window.addEventListener('touchstart', e => {
         for (let t of e.changedTouches) {
-            // Check if touch is on the boost button
             const btnRect = boostBtn.getBoundingClientRect();
             const isBtn = t.clientX > btnRect.left && t.clientX < btnRect.right && 
                           t.clientY > btnRect.top && t.clientY < btnRect.bottom;
@@ -101,7 +123,6 @@
             if (isBtn) {
                 fire();
             } else if (t.clientX < width / 2 && !joystick.active) {
-                // Invisible joystick starts anywhere on left half
                 joystick.active = true;
                 joystick.id = t.identifier;
                 joystick.startX = t.clientX;
@@ -117,12 +138,10 @@
             if (joystick.active && t.identifier === joystick.id) {
                 joystick.currX = t.clientX;
                 joystick.currY = t.clientY;
-                
                 const dx = joystick.currX - joystick.startX;
                 const dy = joystick.currY - joystick.startY;
                 const dist = Math.hypot(dx, dy);
                 const maxDist = 40;
-                
                 joystick.dirX = (dist > 0) ? (dx / dist) * Math.min(dist/maxDist, 1) : 0;
                 joystick.dirY = (dist > 0) ? (dy / dist) * Math.min(dist/maxDist, 1) : 0;
             }
@@ -132,32 +151,38 @@
     window.addEventListener('touchend', e => {
         for (let t of e.changedTouches) {
             if (joystick.id === t.identifier) {
-                joystick.active = false;
-                joystick.id = null;
-                joystick.dirX = 0;
-                joystick.dirY = 0;
+                joystick.active = false; joystick.id = null; joystick.dirX = 0; joystick.dirY = 0;
             }
         }
     });
 
     function fire() {
-        // Initial direction: where player is moving, or up if stationary
         let vx = joystick.dirX * BULLET_SPEED;
         let vy = joystick.dirY * BULLET_SPEED;
         if (Math.abs(vx) < 0.1 && Math.abs(vy) < 0.1) { vy = -BULLET_SPEED; }
-
-        bullets.push({ x: player.x, y: player.y, vx, vy, life: 200 });
+        bullets.push({ x: player.x, y: player.y, vx, vy, life: 180 });
     }
 
     function spawnEnemy() {
-        if (enemies.length < 15) {
+        if (enemies.length < 5 + player.level * 2) {
             const angle = Math.random() * Math.PI * 2;
             const dist = Math.max(width, height);
             enemies.push({
                 x: player.x + Math.cos(angle) * dist,
                 y: player.y + Math.sin(angle) * dist,
                 r: 14,
-                speed: 1.2 + (player.score / 500)
+                speed: 1.2 + (player.level * 0.2),
+                dna: { ...speciesDNA } // Inherit species brain
+            });
+        }
+    }
+
+    function spawnNode() {
+        if (nodes.length < 3) {
+            nodes.push({
+                x: Math.random() * (width - 40) + 20,
+                y: Math.random() * (height - 40) + 20,
+                pulse: 0
             });
         }
     }
@@ -169,50 +194,66 @@
         player.x = Math.max(player.r, Math.min(width - player.r, player.x));
         player.y = Math.max(player.r, Math.min(height - player.r, player.y));
 
-        // Update Bullets with Heat-Seeking
+        // Update Nodes
+        nodes.forEach((n, ni) => {
+            n.pulse += 0.1;
+            if (Math.hypot(player.x - n.x, player.y - n.y) < player.r + 15) {
+                nodes.splice(ni, 1);
+                player.xp++;
+                player.score += 50;
+                if (player.xp >= 5) levelUp();
+            }
+        });
+
+        // Update Bullets
         bullets.forEach((b, bi) => {
-            // Find closest enemy
-            let closest = null;
-            let minDist = Infinity;
+            let closest = null; let minDist = Infinity;
             enemies.forEach(en => {
                 let d = Math.hypot(en.x - b.x, en.y - b.y);
                 if (d < minDist) { minDist = d; closest = en; }
             });
-
             if (closest) {
-                // Seek logic: steering towards target
-                let dx = closest.x - b.x;
-                let dy = closest.y - b.y;
-                let dist = Math.hypot(dx, dy);
-                let desiredVx = (dx / dist) * BULLET_SPEED;
-                let desiredVy = (dy / dist) * BULLET_SPEED;
-
-                b.vx += (desiredVx - b.vx) * SEEK_FORCE;
-                b.vy += (desiredVy - b.vy) * SEEK_FORCE;
+                let dx = closest.x - b.x; let dy = closest.y - b.y; let dist = Math.hypot(dx, dy);
+                b.vx += ((dx / dist) * BULLET_SPEED - b.vx) * SEEK_FORCE;
+                b.vy += ((dy / dist) * BULLET_SPEED - b.vy) * SEEK_FORCE;
             }
-
-            b.x += b.vx;
-            b.y += b.vy;
-            b.life--;
+            b.x += b.vx; b.y += b.vy; b.life--;
             if (b.life <= 0) bullets.splice(bi, 1);
         });
 
-        // Update Enemies
+        // Update AI Enemies (The Neural Logic)
         enemies.forEach((en, ei) => {
-            const angle = Math.atan2(player.y - en.y, player.x - en.x);
-            en.x += Math.cos(angle) * en.speed;
-            en.y += Math.sin(angle) * en.speed;
+            // Find nearest bullet to dodge
+            let dangerX = 0, dangerY = 0;
+            bullets.forEach(b => {
+                let d = Math.hypot(en.x - b.x, en.y - b.y);
+                if (d < 100) { // Detection range
+                    dangerX += (en.x - b.x) / d;
+                    dangerY += (en.y - b.y) / d;
+                }
+            });
 
-            // Player collision
+            // Target Player
+            const angleToPlayer = Math.atan2(player.y - en.y, player.x - en.x);
+            const moveX = Math.cos(angleToPlayer) * en.speed;
+            const moveY = Math.sin(angleToPlayer) * en.speed;
+
+            // Simple Neural Combine: Velocity = (Aggression) + (Dodge Weights * Sensory Input)
+            en.x += moveX + (dangerX * en.dna.dodgeWeight * 5);
+            en.y += moveY + (dangerY * en.dna.dodgeWeight * 5);
+
+            // Collisions
             if (Math.hypot(player.x - en.x, player.y - en.y) < player.r + en.r) {
                 player.hp -= 5;
                 hpEl.innerText = Math.max(0, Math.floor(player.hp));
                 enemies.splice(ei, 1);
             }
 
-            // Bullet collision
             bullets.forEach((b, bi) => {
                 if (Math.hypot(b.x - en.x, b.y - en.y) < en.r + 5) {
+                    // Species learns: dodge weight wasn't high enough
+                    speciesDNA.dodgeWeight += speciesDNA.mutationRate;
+                    iqEl.innerText = Math.floor(speciesDNA.dodgeWeight * 100);
                     enemies.splice(ei, 1);
                     bullets.splice(bi, 1);
                     player.score += 10;
@@ -221,57 +262,67 @@
             });
         });
 
-        if (player.hp <= 0) {
-            alert("Game Over! Watch Time achieved: " + player.score + "s");
-            player.hp = 100;
-            player.score = 0;
-            enemies = [];
-            bullets = [];
-            hpEl.innerText = 100;
-            scoreEl.innerText = 0;
-        }
+        if (player.hp <= 0) resetGame();
+    }
+
+    function levelUp() {
+        player.level++;
+        player.xp = 0;
+        PLAYER_SPEED += 0.5;
+        levelEl.innerText = player.level;
+        msg.style.opacity = 1;
+        msg.innerText = "ALGORITHM TRAINED: LEVEL " + player.level;
+        setTimeout(() => msg.style.opacity = 0, 2000);
+    }
+
+    function resetGame() {
+        alert("The Model Collapsed! Final Score: " + player.score);
+        player.hp = 100; player.score = 0; player.level = 1; player.xp = 0;
+        enemies = []; bullets = []; nodes = [];
+        speciesDNA.dodgeWeight = 0.1;
+        hpEl.innerText = 100; scoreEl.innerText = 0; levelEl.innerText = 1; iqEl.innerText = 0;
     }
 
     function draw() {
-        ctx.fillStyle = 'rgba(5, 5, 5, 0.2)'; // Motion blur effect
+        ctx.fillStyle = 'rgba(5, 5, 5, 0.3)';
         ctx.fillRect(0, 0, width, height);
 
-        // Visual feedback for joystick
         if (joystick.active) {
-            ctx.beginPath();
-            ctx.arc(joystick.startX, joystick.startY, 40, 0, Math.PI*2);
-            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(joystick.currX, joystick.currY, 20, 0, Math.PI*2);
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.fill();
+            ctx.strokeStyle = 'rgba(0, 255, 204, 0.2)';
+            ctx.beginPath(); ctx.arc(joystick.startX, joystick.startY, 40, 0, Math.PI*2); ctx.stroke();
+            ctx.fillStyle = 'rgba(0, 255, 204, 0.4)';
+            ctx.beginPath(); ctx.arc(joystick.currX, joystick.currY, 20, 0, Math.PI*2); ctx.fill();
         }
 
+        // Draw Engagement Nodes (Purpose)
+        nodes.forEach(n => {
+            ctx.shadowBlur = 10 + Math.sin(n.pulse)*5;
+            ctx.shadowColor = '#fff';
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(n.x-10, n.y-10, 20, 20);
+        });
+
         // Draw Player
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#00ffcc';
+        ctx.shadowBlur = 15; ctx.shadowColor = '#00ffcc';
         ctx.fillStyle = '#00ffcc';
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI*2); ctx.fill();
 
         // Draw Enemies
         ctx.shadowColor = '#ff3333';
         ctx.fillStyle = '#ff3333';
         enemies.forEach(en => {
-            ctx.beginPath();
-            ctx.arc(en.x, en.y, en.r, 0, Math.PI*2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(en.x, en.y, en.r, 0, Math.PI*2); ctx.fill();
+            // Tiny IQ indicator
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(en.x - 5, en.y - 20, en.dna.dodgeWeight * 20, 2);
+            ctx.fillStyle = '#ff3333';
         });
 
         // Draw Bullets
         ctx.shadowColor = '#fff';
         ctx.fillStyle = '#fff';
         bullets.forEach(b => {
-            ctx.beginPath();
-            ctx.arc(b.x, b.y, 4, 0, Math.PI*2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill();
         });
         ctx.shadowBlur = 0;
     }
@@ -280,6 +331,7 @@
         update();
         draw();
         if (Math.random() < 0.03) spawnEnemy();
+        if (Math.random() < 0.01) spawnNode();
         requestAnimationFrame(loop);
     }
 
