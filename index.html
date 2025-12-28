@@ -3,648 +3,685 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Algorithm Crawler: Neural Evolution</title>
-    <link rel="manifest" href="manifest.json">
+    <title>Mobile Gear Solid</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: #050505;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
-            touch-action: none;
-            -webkit-user-select: none;
-        }
-        canvas {
-            display: block;
-            width: 100vw;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             height: 100vh;
+            touch-action: none;
+        }
+        #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        #joystick {
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            position: relative;
+            margin-left: 20px;
+            pointer-events: auto;
+        }
+        #joystick-knob {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            position: absolute;
+            top: 50px;
+            left: 50px;
+        }
+        #buttons {
+            display: flex;
+            flex-direction: column;
+            margin-right: 20px;
+        }
+        .button {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            pointer-events: auto;
+        }
+        #loadingScreen, #titleScreen, #cinematicScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        #loadingBar {
+            width: 80%;
+            height: 20px;
+            background: gray;
+            margin-top: 20px;
+        }
+        #loadingFill {
+            height: 100%;
+            background: green;
+            width: 0%;
+        }
+        #cinematicText {
+            width: 80%;
+            height: 60%;
+            background: rgba(0,0,0,0.7);
+            color: green;
+            font-family: monospace;
+            padding: 20px;
+            overflow: hidden;
+            white-space: pre-wrap;
+        }
+        #skipButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: gray;
+            cursor: pointer;
+        }
+        #minimap {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 100px;
+            height: 100px;
+            background: rgba(0,0,0,0.5);
         }
         #ui {
             position: absolute;
-            top: env(safe-area-inset-top, 20px);
-            left: 20px;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .stat { font-size: 14px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); color: #00ffcc; }
-        .lvl { font-size: 20px; color: #ff0032; }
-        .xp-text { color: #00ff00; font-size: 14px; }
-        
-        /* Control Buttons */
-        .ctrl-btn {
-            position: absolute;
-            right: 40px;
-            width: 75px;
-            height: 75px;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            display: none; 
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 10px;
-            z-index: 20;
-            transition: opacity 0.2s;
-            pointer-events: auto;
-        }
-        
-        #boost-btn { display: flex; bottom: 40px; background: rgba(255, 0, 50, 0.6); }
-        #beam-btn { bottom: 130px; background: rgba(0, 255, 255, 0.6); }
-        #toast-btn { bottom: 220px; background: rgba(255, 165, 0, 0.6); }
-        #inv-toggle { 
-            position: absolute; 
-            top: 20px; 
-            right: 20px; 
-            width: 65px; 
-            height: 65px; 
-            background: #222; 
-            border: 1px solid #00ffcc; 
-            border-radius: 12px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 28px; 
-            pointer-events: auto; 
-            z-index: 30;
-        }
-
-        /* Menu System */
-        #menu-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 1000;
-            display: none;
-            padding: 40px 20px;
-            box-sizing: border-box;
-            overflow-y: auto;
-            pointer-events: auto;
-        }
-        .menu-title { color: #00ffcc; font-size: 24px; border-bottom: 1px solid #00ffcc; padding-bottom: 10px; margin-bottom: 10px; }
-        .menu-souls-display { font-size: 18px; color: #fff; margin-bottom: 20px; font-weight: bold; }
-        .inv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .inv-item { background: #111; padding: 10px; border-radius: 5px; border: 1px solid #333; }
-        .upgrade-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #222; }
-        .up-btn { background: #00ffcc; color: #000; border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; font-size: 12px; }
-        .cooldown { opacity: 0.3 !important; }
-
-        #msg {
-            position: absolute;
-            top: 40%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.5s;
-            font-size: 24px;
-            letter-spacing: 3px;
-            z-index: 5;
-            text-shadow: 0 0 10px #00ffcc;
+            top: 10px;
+            left: 10px;
+            color: white;
         }
     </style>
 </head>
 <body>
-
-<div id="ui">
-    <div class="stat lvl">STAGE LAYER: <span id="level">1</span> / 200</div>
-    <div class="stat xp-text">EVOLUTION PROGRESS: <span id="xp-current">0</span> / <span id="xp-needed">5</span> Orbs</div>
-    <div class="stat">System Integrity: <span id="hp">100</span>%</div>
-    <div class="stat">Souls: <span id="score">0</span></div>
-    <div class="stat">Species IQ: <span id="ai-iq">1.0000000</span>%</div>
-</div>
-
-<div id="msg">TOP STATUS ACHIEVED</div>
-
-<!-- Action Buttons -->
-<div id="toast-btn" class="ctrl-btn">FLAME</div>
-<div id="beam-btn" class="ctrl-btn">BEAM</div>
-<div id="boost-btn" class="ctrl-btn">SHOOT</div>
-<div id="inv-toggle">⚙️</div>
-
-<!-- Upgrade Menu -->
-<div id="menu-overlay">
-    <div class="menu-title">NEURAL ENHANCEMENT</div>
-    <div class="menu-souls-display">Souls Collected: <span id="menu-souls-val">0</span></div>
-    
-    <div class="inv-grid">
-        <div class="inv-item">Scraps: <span id="inv-scraps">0</span></div>
-        <div class="inv-item">Gems: <span id="inv-gems">0</span></div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="controls">
+        <div id="joystick">
+            <div id="joystick-knob"></div>
+        </div>
+        <div id="buttons">
+            <div class="button" id="actionA">A</div>
+            <div class="button" id="actionB">B</div>
+            <div class="button" id="actionY">Y</div>
+        </div>
     </div>
-    
-    <div class="upgrade-row">
-        <div>Collection Radius (Magnet)<br><small>Level <span id="up-speed-lvl">1</span> / 5</small></div>
-        <button class="up-btn" onclick="buyUpgrade('speed')" id="btn-speed-cost">Cost: 100 Souls</button>
+    <div id="loadingScreen">
+        <h1>Mobile Gear Solid</h1>
+        <div id="loadingBar">
+            <div id="loadingFill"></div>
+        </div>
     </div>
-    <div class="upgrade-row">
-        <div>Firewall (Max Integrity)<br><small>Level <span id="up-hp-lvl">1</span></small></div>
-        <button class="up-btn" onclick="buyUpgrade('hp')" id="btn-hp-cost">Cost: 150 Souls</button>
+    <div id="titleScreen" style="display: none;">
+        <h1>Mobile Gear Solid</h1>
+        <button id="startButton">Start New Game</button>
+        <button id="continueButton" disabled>Continue</button>
     </div>
-    <div class="upgrade-row">
-        <div>Processing Power (Dmg)<br><small>Level <span id="up-dmg-lvl">1</span></small></div>
-        <button class="up-btn" onclick="buyUpgrade('dmg')" id="btn-dmg-cost">Cost: 200 Souls</button>
+    <div id="cinematicScreen" style="display: none;">
+        <canvas id="smokeCanvas" width="100%" height="100%" style="position: absolute; top:0; left:0;"></canvas>
+        <div id="cinematicText"></div>
+        <button id="skipButton">Skip</button>
     </div>
-
-    <div class="upgrade-row">
-        <div>Visual Range (Zoom Out)<br><small>Level <span id="up-range-lvl">1</span></small></div>
-        <button class="up-btn" onclick="buyUpgrade('range')" id="btn-range-cost">Cost: 1 Gem</button>
+    <canvas id="minimap" width="100" height="100" style="display: none;"></canvas>
+    <div id="ui" style="display: none;">
+        <div>Health: <div id="healthBar" style="width:100px; height:10px; background:red;"></div></div>
+        <div>Weapon: <span id="weapon">None</span></div>
+        <div>Item: <span id="item">None</span></div>
     </div>
-    <div class="upgrade-row">
-        <div>System Cosmetic (Glow)<br><small>Level <span id="up-cosmetic-lvl">1</span></small></div>
-        <button class="up-btn" onclick="buyUpgrade('cosmetic')" id="btn-cosmetic-cost">Cost: 20 Scraps</button>
-    </div>
-    <div class="upgrade-row">
-        <div>Algorithm Skills (Ability+)<br><small>Level <span id="up-skills-lvl">1</span></small></div>
-        <button class="up-btn" onclick="buyUpgrade('skills')" id="btn-skills-cost">Cost: 300 Souls</button>
-    </div>
+    <script>
+        // Game Variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const minimapCanvas = document.getElementById('minimap');
+        const minimapCtx = minimapCanvas.getContext('2d');
+        const smokeCanvas = document.getElementById('smokeCanvas');
+        const smokeCtx = smokeCanvas.getContext('2d');
 
-    <br>
-    <button class="up-btn" style="width:100%; height:50px; z-index:999; background:#ff0032; color:#fff;" onclick="toggleMenu()">CLOSE MENU</button>
-</div>
+        let gameState = 'loading';
+        let currentLevel = 0;
+        let player = { x: 200, y: 500, radius: 10, speed: 2, health: 100, weapon: null, item: null };
+        let enemies = [];
+        let items = [];
+        let walls = [];
+        let alert = false;
+        let cinematicText = '';
+        let typingIndex = 0;
+        let typingInterval;
+        let smokeParticles = [];
 
-<canvas id="gameCanvas"></canvas>
+        // Levels Data (Simplified geometry based on MGS1 layouts)
+        const levels = [
+            // Level 0: Dock
+            {
+                name: 'Dock',
+                background: '#333366', // Watery blue-gray
+                walls: [
+                    {x: 0, y: 0, w: 800, h: 20}, // Top
+                    {x: 0, y: 580, w: 800, h: 20}, // Bottom
+                    {x: 0, y: 0, w: 20, h: 600}, // Left
+                    {x: 780, y: 0, w: 20, h: 600}, // Right
+                    {x: 100, y: 400, w: 600, h: 20}, // Pipe to crawl under
+                    {x: 300, y: 200, w: 200, h: 20} // Forklift
+                ],
+                items: [
+                    {x: 50, y: 550, type: 'ration', radius: 5},
+                    {x: 750, y: 550, type: 'ration', radius: 5},
+                    {x: 400, y: 100, type: 'socom', radius: 5}
+                ],
+                enemies: [
+                    {x: 400, y: 100, radius: 8, path: [{x:400,y:100},{x:600,y:100},{x:600,y:300},{x:400,y:300}], pathIndex:0, dir:1, viewAngle: Math.PI/3, viewDist: 100},
+                    {x: 200, y: 200, radius: 8, path: [{x:200,y:200},{x:200,y:400}], pathIndex:0, dir:1, viewAngle: Math.PI/3, viewDist: 100},
+                    {x: 500, y: 300, radius: 8, path: [{x:500,y:300},{x:700,y:300}], pathIndex:0, dir:1, viewAngle: Math.PI/3, viewDist: 100}
+                ],
+                exit: {x: 400, y: 50, w: 50, h: 50, nextLevel: 1, prompt: 'Tap A to call elevator'}
+            },
+            // Level 1: Heliport
+            {
+                name: 'Heliport',
+                background: '#666666', // Snowy gray
+                walls: [
+                    {x: 0, y: 0, w: 800, h: 20},
+                    {x: 0, y: 580, w: 800, h: 20},
+                    {x: 0, y: 0, w: 20, h: 600},
+                    {x: 780, y: 0, w: 20, h: 600},
+                    {x: 200, y: 300, w: 400, h: 20}, // Helipad
+                    {x: 600, y: 100, w: 100, h: 100} // Truck
+                ],
+                items: [
+                    {x: 400, y: 320, type: 'chaff', radius: 5},
+                    {x: 650, y: 120, type: 'socom', radius: 5},
+                    {x: 100, y: 100, type: 'stun', radius: 5}
+                ],
+                enemies: [
+                    {x: 300, y: 400, radius: 8, path: [{x:300,y:400},{x:500,y:400}], pathIndex:0, dir:1, viewAngle: Math.PI/3, viewDist: 150},
+                    {x: 100, y: 200, radius: 8, path: [{x:100,y:200},{x:100,y:400},{x:300,y:400},{x:300,y:200}], pathIndex:0, dir:1, viewAngle: Math.PI/3, viewDist: 150}
+                ],
+                exit: {x: 700, y: 50, w: 50, h: 50, nextLevel: 2, prompt: 'Tap A to enter vent'} // Simplified to vent
+            },
+            // Level 2: Tank Hangar
+            {
+                name: 'Tank Hangar',
+                background: '#444444', // Industrial gray
+                walls: [
+                    {x: 0, y: 0, w: 800, h: 20},
+                    {x: 0, y: 580, w: 800, h: 20},
+                    {x: 0, y: 0, w: 20, h: 600},
+                    {x: 780, y: 0, w: 20, h: 600},
+                    {x: 200, y: 200, w: 100, h: 100}, // Tank 1
+                    {x: 500, y: 200, w: 100, h: 100}, // Tank 2
+                    {x: 100, y: 400, w: 50, h: 50} // Crate
+                ],
+                items: [
+                    {x: 50, y: 100, type: 'thermal', radius: 5},
+                    {x: 750, y: 100, type: 'mine_detector', radius: 5},
+                    {x: 400, y: 500, type: 'grenade', radius: 5}
+                ],
+                enemies: [
+                    {x: 100, y: 100, radius: 8, path: [{x:100,y:100},{x:300,y:100},{x:300,y:300},{x:100,y:300}], pathIndex:0, dir:1, viewAngle: Math.PI/3, viewDist: 120},
+                    {x: 600, y: 400, radius: 8, path: [{x:600,y:400},{x:700,y:400},{x:700,y:500},{x:600,y:500}], pathIndex:0, dir:1, viewAngle: Math.PI/3, viewDist: 120},
+                    {x: 400, y: 150, radius: 8, path: [{x:400,y:150},{x:400,y:350}], pathIndex:0, dir:1, viewAngle: Math.PI/3, viewDist: 120}
+                ],
+                exit: {x: 400, y: 50, w: 50, h: 50, nextLevel: 3, prompt: 'Tap A to call elevator'} // To canyon for boss
+            },
+            // Level 3: Canyon (Raven Tank Boss)
+            {
+                name: 'Canyon',
+                background: '#996633', // Desert-like for canyon
+                walls: [
+                    {x: 0, y: 0, w: 800, h: 20},
+                    {x: 0, y: 580, w: 800, h: 20},
+                    {x: 0, y: 0, w: 20, h: 600},
+                    {x: 780, y: 0, w: 20, h: 600},
+                    {x: 200, y: 300, w: 200, h: 50} // Rocks
+                ],
+                items: [
+                    {x: 100, y: 500, type: 'grenade', radius: 5},
+                    {x: 700, y: 500, type: 'chaff', radius: 5}
+                ],
+                enemies: [
+                    // Boss: Tank (Simplified as large enemy)
+                    {x: 400, y: 200, radius: 30, health: 100, type: 'boss', viewAngle: Math.PI/2, viewDist: 300, speed: 1}
+                ],
+                exit: null // End after boss
+            }
+        ];
 
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const hpEl = document.getElementById('hp');
-    const scoreEl = document.getElementById('score');
-    const levelEl = document.getElementById('level');
-    const iqEl = document.getElementById('ai-iq');
-    const xpCurEl = document.getElementById('xp-current');
-    const xpNeedEl = document.getElementById('xp-needed');
-    const boostBtn = document.getElementById('boost-btn');
-    const beamBtn = document.getElementById('beam-btn');
-    const toastBtn = document.getElementById('toast-btn');
-    const msg = document.getElementById('msg');
+        // Dialogues (From research)
+        const dialogues = [
+            // Opening briefing
+            "Campbell: Snake, can you hear me?\nSnake: Loud and clear, Colonel.\nCampbell: Good. This is a solo sneaking mission. The facility is Shadow Moses Island, Alaska. Terrorists have taken over, they have Metal Gear REX. Your objective is to infiltrate, rescue the hostages: DARPA Chief Donald Anderson and ArmsTech President Kenneth Baker, and prevent a nuclear launch.\nSnake: Got it. One-man infiltration.\nCampbell: Avoid detection. Use the radar. Good luck.",
+            // After dock
+            "Campbell: Snake, wait for the elevator. Hide behind the forklift.",
+            // Heliport
+            "Naomi: Snake, the enemies are genome soldiers, enhanced.\nMei Ling: This is the radar. Blue is you, red dots enemies, cones their view.",
+            // Tank Hangar
+            "Campbell: Find the elevator to B1. Avoid cameras.",
+            // Before Ocelot (skipped, go to Raven)
+            "Campbell: Ahead is the canyon. Watch for the tank.",
+            // Raven boss intro
+            "Raven: Snake! I am Shaman! Feel the power of the tank!"
+        ];
 
-    let width, height;
-    function resize() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width * window.devicePixelRatio;
-        canvas.height = height * window.devicePixelRatio;
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    // --- State and Species DNA Initialization ---
-    let speciesDNA = { dodgeWeight: 0.01, mutationRate: 0.002 }; 
-
-    let player = { 
-        x: width/2, y: height/2, r: 18, 
-        hp: 100, maxHp: 100,
-        souls: 0, level: 1, xp: 0, xpNeeded: 5,
-        speed: 5, dmg: 1,
-        inventory: { scraps: 0, gems: 0 },
-        upgrades: { speed: 1, hp: 1, dmg: 1, range: 1, cosmetic: 1, skills: 1 },
-        viewScale: 1,
-        glowValue: 0,
-        dustTrail: []
-    };
-
-    function saveGame() {
-        const saveData = {
-            player: player,
-            speciesDNA: speciesDNA
-        };
-        localStorage.setItem('algoCrawlerSave', JSON.stringify(saveData));
-    }
-
-    function loadGame() {
-        const saved = localStorage.getItem('algoCrawlerSave');
-        if(saved) {
-            const data = JSON.parse(saved);
-            Object.assign(player, data.player);
-            if(data.speciesDNA) Object.assign(speciesDNA, data.speciesDNA);
+        // Resize canvas
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            smokeCanvas.width = window.innerWidth;
+            smokeCanvas.height = window.innerHeight;
         }
-        updateUI();
-    }
+        resize();
+        window.addEventListener('resize', resize);
 
-    // Auto-save every 30 seconds
-    setInterval(saveGame, 30000);
+        // Joystick controls
+        let joystickTouchId = null;
+        let joystickCenter = {x: 75, y: 75};
+        let dx = 0, dy = 0;
+        const joystick = document.getElementById('joystick');
+        const knob = document.getElementById('joystick-knob');
 
-    let BULLET_SPEED = 7;
-    const SEEK_FORCE = 0.15;
+        joystick.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            joystickTouchId = touch.identifier;
+            updateJoystick(touch);
+        });
+        joystick.addEventListener('touchmove', (e) => {
+            for (let touch of e.touches) {
+                if (touch.identifier === joystickTouchId) {
+                    updateJoystick(touch);
+                    break;
+                }
+            }
+        });
+        joystick.addEventListener('touchend', () => {
+            joystickTouchId = null;
+            knob.style.left = '50px';
+            knob.style.top = '50px';
+            dx = 0;
+            dy = 0;
+        });
 
-    let enemies = [];
-    let bullets = [];
-    let loots = [];
-    let flames = []; 
-    let currentBeam = null; 
-    let beamTimer = 0;
-    let toastTimer = 0;
-    let isPaused = false;
+        function updateJoystick(touch) {
+            const rect = joystick.getBoundingClientRect();
+            let jx = touch.clientX - rect.left - 75;
+            let jy = touch.clientY - rect.top - 75;
+            const dist = Math.sqrt(jx*jx + jy*jy);
+            if (dist > 50) {
+                jx = (jx / dist) * 50;
+                jy = (jy / dist) * 50;
+            }
+            knob.style.left = 50 + jx + 'px';
+            knob.style.top = 50 + jy + 'px';
+            dx = jx / 50;
+            dy = jy / 50;
+        }
 
-    let joystick = { active: false, id: null, startX: 0, startY: 0, currX: 0, currY: 0, dirX: 0, dirY: 0 };
+        // Buttons
+        let actions = {A: false, B: false, Y: false};
+        ['actionA', 'actionB', 'actionY'].forEach(id => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', () => actions[id.slice(-1)] = true);
+            btn.addEventListener('touchend', () => actions[id.slice(-1)] = false);
+        });
 
-    window.addEventListener('touchstart', e => {
-        const invToggleRect = document.getElementById('inv-toggle').getBoundingClientRect();
-        for (let t of e.changedTouches) {
-            if (isInside(t, invToggleRect)) {
-                toggleMenu();
+        // Loading Screen
+        function startLoading() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 20;
+                document.getElementById('loadingFill').style.width = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        document.getElementById('titleScreen').style.display = 'flex';
+                        gameState = 'title';
+                    }, 1000);
+                }
+            }, 1000); // 5 seconds total
+        }
+        startLoading();
+
+        // Title Screen
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('titleScreen').style.display = 'none';
+            startCinematic(0);
+        });
+
+        // Cinematic
+        function startCinematic(index) {
+            if (index >= dialogues.length) {
+                loadLevel(currentLevel);
                 return;
             }
+            gameState = 'cinematic';
+            document.getElementById('cinematicScreen').style.display = 'flex';
+            cinematicText = dialogues[index];
+            typingIndex = 0;
+            document.getElementById('cinematicText').innerHTML = '';
+            typingInterval = setInterval(typeText, 50);
+            initSmoke();
+            animateSmoke();
+
+            document.getElementById('skipButton').onclick = () => {
+                clearInterval(typingInterval);
+                document.getElementById('cinematicText').innerHTML = cinematicText;
+                setTimeout(() => endCinematic(index), 2000);
+            };
         }
-        if(isPaused) return;
-        for (let t of e.changedTouches) {
-            const beamRect = beamBtn.getBoundingClientRect();
-            const toastRect = toastBtn.getBoundingClientRect();
-            const boostRect = boostBtn.getBoundingClientRect();
-            if (isInside(t, boostRect)) {
-                fire();
-            } else if (player.level >= 5 && isInside(t, beamRect) && beamTimer <= 0) {
-                triggerBeam();
-            } else if (player.level >= 7 && isInside(t, toastRect) && toastTimer <= 0) {
-                triggerToast();
-            } else if (t.clientX < width / 2 && !joystick.active) {
-                joystick.active = true;
-                joystick.id = t.identifier;
-                joystick.startX = t.clientX;
-                joystick.startY = t.clientY;
+
+        function typeText() {
+            if (typingIndex < cinematicText.length) {
+                document.getElementById('cinematicText').innerHTML += cinematicText[typingIndex];
+                typingIndex++;
+            } else {
+                clearInterval(typingInterval);
+                setTimeout(() => endCinematic(currentLevel), 3000);
             }
         }
-    }, {passive: false});
 
-    function isInside(touch, rect) {
-        return touch.clientX > rect.left && touch.clientX < rect.right && 
-               touch.clientY > rect.top && touch.clientY < rect.bottom;
-    }
+        function endCinematic(index) {
+            document.getElementById('cinematicScreen').style.display = 'none';
+            startCinematic(index + 1);
+        }
 
-    window.addEventListener('touchmove', e => {
-        for (let t of e.changedTouches) {
-            if (joystick.active && t.identifier === joystick.id) {
-                const dx = t.clientX - joystick.startX;
-                const dy = t.clientY - joystick.startY;
-                const dist = Math.hypot(dx, dy);
-                const maxDist = 40;
-                joystick.dirX = (dist > 0) ? (dx / dist) * Math.min(dist/maxDist, 1) : 0;
-                joystick.dirY = (dist > 0) ? (dy / dist) * Math.min(dist/maxDist, 1) : 0;
+        // Smoke Background
+        function initSmoke() {
+            smokeParticles = [];
+            for (let i = 0; i < 100; i++) {
+                smokeParticles.push({
+                    x: Math.random() * smokeCanvas.width,
+                    y: Math.random() * smokeCanvas.height,
+                    radius: Math.random() * 20 + 10,
+                    speed: Math.random() * 0.5 + 0.1,
+                    opacity: Math.random() * 0.5 + 0.1
+                });
             }
         }
-    }, {passive: false});
 
-    window.addEventListener('touchend', e => {
-        for (let t of e.changedTouches) {
-            if (joystick.id === t.identifier) {
-                joystick.active = false; joystick.id = null; joystick.dirX = 0; joystick.dirY = 0;
-            }
-        }
-    });
-
-    function toggleMenu() {
-        isPaused = !isPaused;
-        document.getElementById('menu-overlay').style.display = isPaused ? 'block' : 'none';
-        updateUI();
-    }
-
-    function buyUpgrade(type) {
-        let soulCost = 0;
-        let scrapCost = 0;
-        let gemCost = 0;
-
-        if(type === 'speed') {
-            if(player.upgrades.speed >= 5) return;
-            soulCost = 100 * player.upgrades.speed;
-        }
-        if(type === 'hp') soulCost = 150 * player.upgrades.hp;
-        if(type === 'dmg') soulCost = 200 * player.upgrades.dmg;
-        if(type === 'skills') soulCost = 300 * player.upgrades.skills;
-        if(type === 'range') gemCost = 1 * player.upgrades.range;
-        if(type === 'cosmetic') scrapCost = 20 * player.upgrades.cosmetic;
-
-        if(player.souls >= soulCost && player.inventory.scraps >= scrapCost && player.inventory.gems >= gemCost) {
-            player.souls -= soulCost;
-            player.inventory.scraps -= scrapCost;
-            player.inventory.gems -= gemCost;
-            player.upgrades[type]++;
-            
-            if(type === 'hp') { player.maxHp += 20; player.hp = player.maxHp; }
-            if(type === 'dmg') player.dmg += 0.5;
-            if(type === 'range') player.viewScale = 1 / (1 + (player.upgrades.range - 1) * 0.05);
-            if(type === 'cosmetic') player.glowValue = Math.min(10, player.glowValue + 0.0003);
-            
-            updateUI();
-            saveGame();
-        }
-    }
-
-    function updateUI() {
-        scoreEl.innerText = Math.floor(player.souls);
-        document.getElementById('menu-souls-val').innerText = Math.floor(player.souls);
-        hpEl.innerText = Math.floor(player.hp);
-        levelEl.innerText = player.level;
-        iqEl.innerText = (speciesDNA.dodgeWeight * 100).toFixed(7);
-        xpCurEl.innerText = player.xp;
-        xpNeedEl.innerText = player.xpNeeded;
-        
-        document.getElementById('inv-scraps').innerText = player.inventory.scraps;
-        document.getElementById('inv-gems').innerText = player.inventory.gems;
-        document.getElementById('up-speed-lvl').innerText = player.upgrades.speed;
-        document.getElementById('up-hp-lvl').innerText = player.upgrades.hp;
-        document.getElementById('up-dmg-lvl').innerText = player.upgrades.dmg;
-        document.getElementById('up-range-lvl').innerText = player.upgrades.range;
-        document.getElementById('up-cosmetic-lvl').innerText = player.upgrades.cosmetic;
-        document.getElementById('up-skills-lvl').innerText = player.upgrades.skills;
-
-        document.getElementById('btn-speed-cost').innerText = player.upgrades.speed >= 5 ? "MAXED" : `Cost: ${100 * player.upgrades.speed} Souls`;
-        document.getElementById('btn-hp-cost').innerText = `Cost: ${150 * player.upgrades.hp} Souls`;
-        document.getElementById('btn-dmg-cost').innerText = `Cost: ${200 * player.upgrades.dmg} Souls`;
-        document.getElementById('btn-range-cost').innerText = `Cost: ${1 * player.upgrades.range} Gems`;
-        document.getElementById('btn-cosmetic-cost').innerText = `Cost: ${20 * player.upgrades.cosmetic} Scraps`;
-        document.getElementById('btn-skills-cost').innerText = `Cost: ${300 * player.upgrades.skills} Souls`;
-
-        if (player.level >= 5) beamBtn.style.display = 'flex';
-        if (player.level >= 7) toastBtn.style.display = 'flex';
-    }
-
-    function fire() {
-        let vx = joystick.dirX * (BULLET_SPEED + (player.upgrades.skills * 0.2));
-        let vy = joystick.dirY * (BULLET_SPEED + (player.upgrades.skills * 0.2));
-        if (Math.abs(vx) < 0.1 && Math.abs(vy) < 0.1) { vy = -(BULLET_SPEED + (player.upgrades.skills * 0.2)); }
-        bullets.push({ x: player.x, y: player.y, vx, vy, life: 180 });
-    }
-
-    function triggerBeam() {
-        let closest = getClosestEnemy();
-        if (!closest) return;
-        beamTimer = 180;
-        beamBtn.classList.add('cooldown');
-        const angle = Math.atan2(closest.y - player.y, closest.x - player.x);
-        currentBeam = { x: player.x, y: player.y, angle: angle, life: 30, width: 40 + (player.upgrades.skills * 5) };
-    }
-
-    function triggerToast() {
-        toastTimer = 180; 
-        toastBtn.classList.add('cooldown');
-        for(let i=0; i<20; i++) {
-            const angle = (Math.random() - 0.5) + Math.atan2(joystick.dirY || -1, joystick.dirX || 0);
-            flames.push({ x: player.x, y: player.y, vx: Math.cos(angle) * (4 + Math.random() * 4), vy: Math.sin(angle) * (4 + Math.random() * 4), life: 40 + (player.upgrades.skills * 2) });
-        }
-    }
-
-    function getClosestEnemy() {
-        let closest = null; let minDist = Infinity;
-        enemies.forEach(en => {
-            let d = Math.hypot(en.x - player.x, en.y - player.y);
-            if (d < minDist) { minDist = d; closest = en; }
-        });
-        return closest;
-    }
-
-    function spawnEnemy() {
-        let spawnDist = Math.max(width, height) / player.viewScale;
-        if (enemies.length < 5 + player.level * 1.5) {
-            const angle = Math.random() * Math.PI * 2;
-            const calculatedSpeed = 1.0 + (player.level * 0.05);
-            const finalSpeed = Math.min(player.speed - 0.8, calculatedSpeed);
-            
-            enemies.push({
-                x: player.x + Math.cos(angle) * spawnDist,
-                y: player.y + Math.sin(angle) * spawnDist,
-                r: 14,
-                speed: finalSpeed,
-                dna: { ...speciesDNA },
-                burning: 0,
-                hp: 1 + (player.level * 0.3)
+        function animateSmoke() {
+            if (gameState !== 'cinematic') return;
+            smokeCtx.clearRect(0, 0, smokeCanvas.width, smokeCanvas.height);
+            smokeParticles.forEach(p => {
+                smokeCtx.beginPath();
+                smokeCtx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+                smokeCtx.fillStyle = `rgba(200,200,200,${p.opacity})`;
+                smokeCtx.fill();
+                p.y -= p.speed;
+                p.x += Math.sin(p.y / 50) * 0.5; // Wavy motion
+                if (p.y < -p.radius) p.y = smokeCanvas.height + p.radius;
             });
-        }
-    }
-
-    function spawnGreenOrb() {
-        let worldW = width / player.viewScale;
-        let worldH = height / player.viewScale;
-        loots.push({ 
-            x: Math.random() * (worldW - 40) + 20, 
-            y: Math.random() * (worldH - 40) + 20, 
-            type: 'xpOrb', 
-            life: 1200 
-        });
-    }
-
-    function dropLoot(x, y) {
-        const rand = Math.random();
-        let type = 'scrap';
-        if (rand > 0.95) type = 'gem';
-        loots.push({ x, y, type, life: 600 });
-    }
-
-    function update() {
-        if (isPaused) return;
-
-        if (beamTimer > 0) { beamTimer--; if (beamTimer <= 0) beamBtn.classList.remove('cooldown'); }
-        if (toastTimer > 0) { toastTimer--; if (toastTimer <= 0) toastBtn.classList.remove('cooldown'); }
-
-        player.x += joystick.dirX * player.speed;
-        player.y += joystick.dirY * player.speed;
-
-        let boundW = width / player.viewScale;
-        let boundH = height / player.viewScale;
-        player.x = Math.max(player.r, Math.min(boundW - player.r, player.x));
-        player.y = Math.max(player.r, Math.min(boundH - player.r, player.y));
-
-        if (player.upgrades.cosmetic > 1 && Math.random() < 0.3) {
-            player.dustTrail.push({x: player.x, y: player.y, life: 30, r: Math.random() * 2});
-        }
-        
-        // MAGNET LOGIC BASED ON LEVEL
-        let magnetDist = 30 + (player.upgrades.speed * 50);
-
-        for (let i = player.dustTrail.length - 1; i >= 0; i--) {
-            player.dustTrail[i].life--;
-            if(player.dustTrail[i].life <= 0) player.dustTrail.splice(i, 1);
+            requestAnimationFrame(animateSmoke);
         }
 
-        for (let i = loots.length - 1; i >= 0; i--) {
-            let l = loots[i];
-            l.life--;
-            
-            let dToPlayer = Math.hypot(player.x - l.x, player.y - l.y);
-            if (dToPlayer < magnetDist) {
-                l.x += (player.x - l.x) * 0.15;
-                l.y += (player.y - l.y) * 0.15;
+        // Load Level
+        function loadLevel(level) {
+            currentLevel = level;
+            const lev = levels[level];
+            walls = lev.walls;
+            items = lev.items;
+            enemies = lev.enemies;
+            player.x = 200;
+            player.y = 500;
+            alert = false;
+            gameState = 'playing';
+            document.getElementById('minimap').style.display = 'block';
+            document.getElementById('ui').style.display = 'block';
+            gameLoop();
+        }
+
+        // Collision Detection
+        function collides(a, b) {
+            if ('radius' in a && 'radius' in b) {
+                const dist = Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2);
+                return dist < a.radius + b.radius;
+            } else {
+                return a.x + a.radius > b.x && a.x - a.radius < b.x + b.w &&
+                       a.y + a.radius > b.y && a.y - a.radius < b.y + b.h;
+            }
+        }
+
+        // Vision Check
+        function inVision(player, enemy) {
+            const dx = player.x - enemy.x;
+            const dy = player.y - enemy.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > enemy.viewDist) return false;
+            const angle = Math.atan2(dy, dx);
+            const enemyDir = enemy.dir > 0 ? 0 : Math.PI; // Simplified direction
+            const angleDiff = Math.abs(angle - enemyDir);
+            return angleDiff < enemy.viewAngle / 2;
+        }
+
+        // Game Loop
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+
+            // Clear
+            ctx.fillStyle = levels[currentLevel].background;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Player Movement
+            let newX = player.x + dx * player.speed;
+            let newY = player.y + dy * player.speed;
+            let canMove = true;
+            walls.forEach(w => {
+                if (collides({x: newX, y: newY, radius: player.radius}, w)) canMove = false;
+            });
+            if (canMove) {
+                player.x = newX;
+                player.y = newY;
             }
 
-            if (dToPlayer < player.r + 15) {
-                if(l.type === 'scrap') player.inventory.scraps++;
-                if(l.type === 'gem') player.inventory.gems++;
-                if(l.type === 'xpOrb') {
-                    player.xp++;
-                    if(player.xp >= player.xpNeeded) levelUp();
+            // Draw Walls
+            ctx.fillStyle = '#222';
+            walls.forEach(w => ctx.fillRect(w.x, w.y, w.w, w.h));
+
+            // Items
+            items.forEach((it, i) => {
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(it.x, it.y, it.radius, 0, Math.PI*2);
+                ctx.fill();
+                if (collides(player, it)) {
+                    if (it.type === 'ration') player.health = Math.min(100, player.health + 20);
+                    else if (it.type === 'socom') player.weapon = 'SOCOM';
+                    else if (it.type === 'grenade') player.item = 'Grenade';
+                    else if (it.type === 'chaff') player.item = 'Chaff';
+                    items.splice(i, 1);
                 }
-                player.souls += 10;
-                loots.splice(i, 1);
-                updateUI();
-            } else if (l.life <= 0) loots.splice(i, 1);
-        }
-
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            let b = bullets[i];
-            let closest = null; let minDist = Infinity;
-            enemies.forEach(en => {
-                let d = Math.hypot(en.x - b.x, en.y - b.y);
-                if (d < minDist) { minDist = d; closest = en; }
             });
-            if (closest) {
-                let dx = closest.x - b.x; let dy = closest.y - b.y; let dist = Math.hypot(dx, dy);
-                b.vx += ((dx / dist) * BULLET_SPEED - b.vx) * SEEK_FORCE;
-                b.vy += ((dy / dist) * BULLET_SPEED - b.vy) * SEEK_FORCE;
-            }
-            b.x += b.vx; b.y += b.vy; b.life--;
-            if (b.life <= 0) bullets.splice(i, 1);
-        }
 
-        if (currentBeam) {
-            currentBeam.x = player.x; currentBeam.y = player.y;
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                let en = enemies[i];
-                let dx = en.x - currentBeam.x, dy = en.y - currentBeam.y;
-                if (Math.abs(Math.atan2(dy, dx) - currentBeam.angle) < 0.1) {
-                    dropLoot(en.x, en.y); enemies.splice(i, 1); player.souls += 20;
+            // Enemies
+            enemies.forEach(e => {
+                // Patrol
+                if (!alert && !e.type) {
+                    const path = e.path[e.pathIndex];
+                    const dx = path.x - e.x;
+                    const dy = path.y - e.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist < 1) {
+                        e.pathIndex += e.dir;
+                        if (e.pathIndex >= e.path.length - 1 || e.pathIndex <= 0) e.dir = -e.dir;
+                    } else {
+                        e.x += (dx / dist) * 1;
+                        e.y += (dy / dist) * 1;
+                    }
                 }
-            }
-            currentBeam.life--; if (currentBeam.life <= 0) currentBeam = null;
-        }
 
-        for (let i = flames.length - 1; i >= 0; i--) {
-            let f = flames[i];
-            f.x += f.vx; f.y += f.vy; f.life--;
-            enemies.forEach(en => { if (Math.hypot(f.x - en.x, f.y - en.y) < en.r + 10) en.burning = 180; });
-            if (f.life <= 0) flames.splice(i, 1);
-        }
+                // Vision Cone
+                ctx.fillStyle = 'rgba(255,0,0,0.2)';
+                ctx.beginPath();
+                ctx.moveTo(e.x, e.y);
+                const dir = e.dir > 0 ? 0 : Math.PI;
+                ctx.arc(e.x, e.y, e.viewDist, dir - e.viewAngle/2, dir + e.viewAngle/2);
+                ctx.fill();
 
-        for (let i = enemies.length - 1; i >= 0; i--) {
-            let en = enemies[i];
-            if (en.burning > 0) {
-                en.burning--; if (en.burning % 60 === 0) en.hp -= 1;
-                if (en.hp <= 0) { dropLoot(en.x, en.y); enemies.splice(i, 1); continue; }
-            }
-            let dangerX = 0, dangerY = 0;
-            bullets.forEach(b => {
-                let d = Math.hypot(en.x - b.x, en.y - b.y);
-                if (d < 100) { dangerX += (en.x - b.x) / d; dangerY += (en.y - b.y) / d; }
+                // Draw Enemy
+                ctx.fillStyle = 'red';
+                ctx.beginPath();
+                ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
+                ctx.fill();
+
+                // Detection
+                if (inVision(player, e) && !alert) {
+                    alert = true;
+                    // Play ALERT sound or text
+                    ctx.fillStyle = 'red';
+                    ctx.font = '40px Arial';
+                    ctx.fillText('ALERT!', canvas.width/2 - 100, canvas.height/2);
+                }
+
+                if (alert && !e.type) {
+                    // Chase player
+                    const dx = player.x - e.x;
+                    const dy = player.y - e.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist > 1) {
+                        e.x += (dx / dist) * 1.5;
+                        e.y += (dy / dist) * 1.5;
+                    }
+                    if (collides(player, e)) player.health -= 0.5;
+                }
+
+                // Boss logic
+                if (e.type === 'boss') {
+                    // Tank moves slowly towards player
+                    const dx = player.x - e.x;
+                    const dy = player.y - e.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist > 50) {
+                        e.x += (dx / dist) * e.speed;
+                        e.y += (dy / dist) * e.speed;
+                    }
+                    // "Shoot" if close
+                    if (dist < 200) player.health -= 0.1;
+                    if (collides(player, e)) player.health -= 1;
+
+                    // Damage boss with grenade
+                    if (actions.B && player.item === 'Grenade' && dist < 50) {
+                        e.health -= 10;
+                        actions.B = false; // Debounce
+                    }
+                    if (e.health <= 0) {
+                        endGame();
+                    }
+                }
             });
-            const angleToPlayer = Math.atan2(player.y - en.y, player.x - en.x);
-            en.x += Math.cos(angleToPlayer) * en.speed + (dangerX * en.dna.dodgeWeight * 5);
-            en.y += Math.sin(angleToPlayer) * en.speed + (dangerY * en.dna.dodgeWeight * 5);
-            
-            if (Math.hypot(player.x - en.x, player.y - en.y) < player.r + en.r) {
-                player.hp -= 3; updateUI(); enemies.splice(i, 1); continue;
-            }
-            
-            for (let j = bullets.length - 1; j >= 0; j--) {
-                if (Math.hypot(bullets[j].x - en.x, bullets[j].y - en.y) < en.r + 5) {
-                    en.hp -= player.dmg;
-                    bullets.splice(j, 1);
-                    if(en.hp <= 0) {
-                        speciesDNA.dodgeWeight += speciesDNA.mutationRate;
-                        dropLoot(en.x, en.y); enemies.splice(i, 1); player.souls += 10; updateUI();
-                        break;
+
+            // Player
+            ctx.fillStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2);
+            ctx.fill();
+
+            // Actions
+            const lev = levels[currentLevel];
+            if (lev.exit && collides(player, lev.exit)) {
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.fillText(lev.exit.prompt, player.x, player.y - 20);
+                if (actions.A) {
+                    actions.A = false;
+                    if (lev.nextLevel < levels.length) {
+                        currentLevel = lev.nextLevel;
+                        loadLevel(currentLevel);
+                        startCinematic(currentLevel);
                     }
                 }
             }
-        }
-        if (player.hp <= 0) resetGame(false);
-    }
 
-    function levelUp() {
-        player.level++; 
-        player.xp = 0;
-        player.xpNeeded = 5 + (player.level * 2); 
-        if (player.level >= 20) { resetGame(true); return; }
-        updateUI();
-        saveGame();
-        msg.style.opacity = 1;
-        msg.innerText = "ALGORITHM EVOLVED: LAYER " + player.level;
-        setTimeout(() => msg.style.opacity = 0, 2000);
-    }
-
-    function resetGame(victory) {
-        if (victory) {
-            alert("CONGRATULATIONS! Algorithm Perfection Reached.");
-            localStorage.clear();
-            location.reload();
-        } else {
-            alert("Model Collapse! Souls Saved.");
-            player.hp = player.maxHp; 
-            player.xp = 0;
-            enemies = []; bullets = []; loots = []; flames = [];
-            updateUI();
-        }
-    }
-
-    function draw() {
-        ctx.fillStyle = 'rgba(5, 5, 5, 0.4)';
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.save();
-        ctx.scale(player.viewScale, player.viewScale);
-
-        if (joystick.active) {
-            ctx.strokeStyle = 'rgba(0, 255, 204, 0.15)';
-            ctx.beginPath(); ctx.arc(joystick.startX, joystick.startY, 40, 0, Math.PI*2); ctx.stroke();
-        }
-
-        player.dustTrail.forEach(d => {
-            ctx.fillStyle = `rgba(255, 255, 255, ${d.life/30})`;
-            ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
-        });
-
-        loots.forEach(l => {
-            if(l.type === 'xpOrb') {
-                ctx.fillStyle = '#00ff00';
-                ctx.shadowBlur = 15; ctx.shadowColor = '#00ff00';
-                ctx.beginPath(); ctx.arc(l.x, l.y, 8, 0, Math.PI*2); ctx.fill();
-            } else {
-                ctx.fillStyle = l.type === 'gem' ? '#ff00ff' : '#aaa';
-                ctx.fillRect(l.x - 5, l.y - 5, 10, 10);
+            // Codec call simulation
+            if (Math.random() < 0.001) { // Random prompt
+                ctx.fillText('Tap Y to answer', player.x, player.y - 40);
+                if (actions.Y) {
+                    actions.Y = false;
+                    startCinematic(Math.floor(Math.random() * dialogues.length));
+                }
             }
-            ctx.shadowBlur = 0;
-        });
 
-        if (currentBeam) {
-            ctx.shadowBlur = 30; ctx.shadowColor = '#00ffff';
-            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)'; ctx.lineWidth = currentBeam.width;
-            ctx.beginPath(); ctx.moveTo(currentBeam.x, currentBeam.y);
-            ctx.lineTo(currentBeam.x + Math.cos(currentBeam.angle) * 2000, currentBeam.y + Math.sin(currentBeam.angle) * 2000);
-            ctx.stroke();
+            // Attack
+            if (actions.B && player.weapon) {
+                // Simplified shoot/punch
+                enemies.forEach((e, i) => {
+                    if (collides({x: player.x + 20, y: player.y, radius: 5}, e)) {
+                        // Hit
+                        if (e.type) e.health -= 5;
+                        else enemies.splice(i, 1);
+                    }
+                });
+                actions.B = false;
+            }
+
+            // Health
+            if (player.health <= 0) endGame(false);
+
+            // UI
+            document.getElementById('healthBar').style.width = player.health + 'px';
+            document.getElementById('weapon').innerText = player.weapon || 'None';
+            document.getElementById('item').innerText = player.item || 'None';
+
+            // Minimap
+            minimapCtx.clearRect(0, 0, 100, 100);
+            minimapCtx.fillStyle = 'blue';
+            minimapCtx.beginPath();
+            minimapCtx.arc(player.x / 8, player.y / 6, 2, 0, Math.PI*2);
+            minimapCtx.fill();
+            enemies.forEach(e => {
+                minimapCtx.fillStyle = 'red';
+                minimapCtx.beginPath();
+                minimapCtx.arc(e.x / 8, e.y / 6, 2, 0, Math.PI*2);
+                minimapCtx.fill();
+                // Cone simplified
+                minimapCtx.fillStyle = 'rgba(255,0,0,0.2)';
+                minimapCtx.beginPath();
+                minimapCtx.moveTo(e.x / 8, e.y / 6);
+                const dir = e.dir > 0 ? 0 : Math.PI;
+                minimapCtx.arc(e.x / 8, e.y / 6, e.viewDist / 8, dir - e.viewAngle/2, dir + e.viewAngle/2);
+                minimapCtx.fill();
+            });
+
+            requestAnimationFrame(gameLoop);
         }
 
-        flames.forEach(f => {
-            ctx.fillStyle = `rgba(255, ${100 + f.life*2}, 0, ${f.life/40})`;
-            ctx.beginPath(); ctx.arc(f.x, f.y, 8 + (40-f.life), 0, Math.PI*2); ctx.fill();
-        });
-
-        ctx.shadowBlur = 15 + (player.glowValue * 100); 
-        ctx.shadowColor = '#00ffcc';
-        ctx.fillStyle = '#00ffcc';
-        ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI*2); ctx.fill();
-
-        enemies.forEach(en => {
-            ctx.shadowColor = en.burning > 0 ? '#ffae00' : '#ff3333';
-            ctx.fillStyle = en.burning > 0 ? '#ffae00' : '#ff3333';
-            ctx.beginPath(); ctx.arc(en.x, en.y, en.r, 0, Math.PI*2); ctx.fill();
-        });
-
-        ctx.shadowColor = '#fff'; ctx.fillStyle = '#fff';
-        bullets.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill(); });
-        
-        ctx.restore(); 
-    }
-
-    function loop() {
-        update();
-        draw();
-        if (!isPaused && Math.random() < 0.03) spawnEnemy();
-        if (!isPaused && Math.random() < 0.01) spawnGreenOrb();
-        requestAnimationFrame(loop);
-    }
-
-    loadGame();
-    loop();
-</script>
+        // End Game
+        function endGame(win = true) {
+            gameState = 'end';
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '40px Arial';
+            ctx.fillText(win ? 'Thanks for playing!' : 'Game Over', canvas.width/2 - 200, canvas.height/2);
+        }
+    </script>
 </body>
 </html>
