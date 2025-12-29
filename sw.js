@@ -1,4 +1,4 @@
-const GAME_VERSION = 'v2.3';
+const GAME_VERSION = 'v2.4';
 const CACHE_NAME = `AIC-${GAME_VERSION}`;
 
 const ASSETS = [
