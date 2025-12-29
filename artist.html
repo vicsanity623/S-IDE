@@ -246,12 +246,12 @@
     canvas.addEventListener('pointerdown', e => {
         if (isPinching) return;
 
-        // Double Tap detection - ONLY in DRAW mode
         if (mode === 'draw') {
+            // Double Tap Detection only in Draw Mode
             const now = Date.now();
             if (now - lastTapTime < 350) {
-                undo(); // Undo the accidental first tap of this double-tap
-                undo(); // Undo the actual previous edit
+                undo(); // Undo the dot created by the first tap
+                undo(); // Undo the actual previous stroke
                 lastTapTime = 0;
                 isDragging = false;
                 return;
@@ -261,22 +261,19 @@
             isDragging = true;
             lastMousePos = { x: e.clientX, y: e.clientY };
 
-            // Create stroke/dot
-            if (e.pointerType !== 'mouse' || e.buttons === 1) {
-                const pos = screenToWorld(e.clientX, e.clientY);
-                currentStroke = {
-                    color: document.getElementById('colorPicker').value,
-                    size: document.getElementById('sizePicker').value / camera.zoom,
-                    opacity: document.getElementById('opacityPicker').value / 100,
-                    type: document.getElementById('toolType').value,
-                    points: [{...pos, p: e.pressure || 0.5}]
-                };
-                strokes.push(currentStroke);
-                if (strokes.length > 101) strokes.shift();
-            }
+            const pos = screenToWorld(e.clientX, e.clientY);
+            currentStroke = {
+                color: document.getElementById('colorPicker').value,
+                size: document.getElementById('sizePicker').value / camera.zoom,
+                opacity: document.getElementById('opacityPicker').value / 100,
+                type: document.getElementById('toolType').value,
+                points: [{...pos, p: e.pressure || 0.5}]
+            };
+            strokes.push(currentStroke);
+            if (strokes.length > 101) strokes.shift();
             addVisualTouch(e.clientX, e.clientY);
         } else {
-            // Adjust Mode
+            // Adjust Mode Logic
             isDragging = true;
             lastMousePos = { x: e.clientX, y: e.clientY };
         }
@@ -287,14 +284,12 @@
         if (!isDragging) return;
 
         if (mode === 'pan') {
-            // Adjust Mode: Navigating
             const dx = e.clientX - lastMousePos.x;
             const dy = e.clientY - lastMousePos.y;
             camera.x += dx;
             camera.y += dy;
             lastMousePos = { x: e.clientX, y: e.clientY };
         } else if (mode === 'draw' && currentStroke) {
-            // Draw Mode: Marking
             const pos = screenToWorld(e.clientX, e.clientY);
             currentStroke.points.push({...pos, p: e.pressure || 0.5});
             addVisualTouch(e.clientX, e.clientY);
@@ -306,11 +301,12 @@
         currentStroke = null;
     });
 
-    // Navigation Gestures - ONLY in Adjust Mode
+    // Navigation Gestures - Locked to Adjust Mode
     canvas.addEventListener('touchstart', e => {
         if (mode === 'pan' && e.touches.length === 2) {
             isPinching = true;
             isDragging = false;
+            currentStroke = null;
             initialPinchDist = getDist(e.touches[0], e.touches[1]);
             initialPinchZoom = camera.zoom;
         }
@@ -323,7 +319,8 @@
             const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
             const factor = currentDist / initialPinchDist;
-            applyZoom(initialPinchZoom * factor / camera.zoom, centerX, centerY);
+            const targetZoom = initialPinchZoom * factor;
+            applyZoom(targetZoom / camera.zoom, centerX, centerY);
         }
     }, { passive: false });
 
@@ -413,17 +410,21 @@
         });
     }
 
+    // Fixed Render Loop: Always clears the frame to prevent Adjust Mode trails
     function renderLoop() {
+        // Essential: Clear the entire canvas and reset identity matrix every frame
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Apply camera and draw content
         ctx.save();
         ctx.translate(camera.x, camera.y);
         ctx.scale(camera.zoom, camera.zoom);
         drawPaths(ctx, camera);
         ctx.restore();
 
+        // Render Touch Feedback
         visualTouches.forEach((t, i) => {
             ctx.beginPath();
             ctx.fillStyle = t.color;
@@ -498,6 +499,7 @@
         });
     }
 
+    // Kickoff loop
     requestAnimationFrame(renderLoop);
 </script>
 </body>
