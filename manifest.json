@@ -1,7 +1,7 @@
 {
   "name": " Infinite-Canvas",
   "short_name": "Artistic",
-  "start_url": "./artistic.html",
+  "start_url": "./artist.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#c0392b",
