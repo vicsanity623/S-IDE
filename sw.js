@@ -1,9 +1,10 @@
-const GAME_VERSION = 'v1.9';
-const CACHE_NAME = `algo-${GAME_VERSION}`;
+const GAME_VERSION = 'v2.0';
+const CACHE_NAME = `AIC-${GAME_VERSION}`;
 
 const ASSETS = [
     './',
-    './index.html'
+    './index.html',
+    './artistic.html'
 ];
 
 // 1. INSTALL: Cache files and force activation
