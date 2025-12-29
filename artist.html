@@ -209,6 +209,10 @@
     let initialPinchZoom = 1;
     let isPinching = false;
 
+    // Ghosting / Clone State
+    let ghosts = [];
+    const GHOST_DURATION = 1200; // 1.2 seconds
+
     // Visual Feedback State
     let visualTouches = [];
 
@@ -255,6 +259,9 @@
 
         if (isDragging) {
             if (mode === 'pan' || (e.buttons === 2) || (e.pointerType === 'touch' && e.shiftKey)) {
+                // Before moving, capture current camera state as a ghost
+                addGhost();
+                
                 const dx = e.clientX - lastMousePos.x;
                 const dy = e.clientY - lastMousePos.y;
                 camera.x += dx;
@@ -288,6 +295,10 @@
     canvas.addEventListener('touchmove', e => {
         if (e.touches.length === 2) {
             e.preventDefault();
+            
+            // Capture ghost before camera changes
+            addGhost();
+
             const currentDist = getDist(e.touches[0], e.touches[1]);
             const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
@@ -310,9 +321,21 @@
     // Mouse Wheel Zoom
     canvas.addEventListener('wheel', e => {
         e.preventDefault();
+        addGhost();
         const factor = Math.pow(1.1, -e.deltaY / 150);
         applyZoom(factor, e.clientX, e.clientY);
     }, { passive: false });
+
+    function addGhost() {
+        // Only capture ghost if there's something to show
+        if (strokes.length === 0) return;
+        ghosts.push({
+            x: camera.x,
+            y: camera.y,
+            zoom: camera.zoom,
+            time: Date.now()
+        });
+    }
 
     function applyZoom(factor, centerX, centerY) {
         const worldPos = screenToWorld(centerX, centerY);
@@ -347,49 +370,68 @@
         });
     }
 
+    // Core Drawing Logic Helper
+    function drawPaths(targetCtx, currentCam) {
+        strokes.forEach(stroke => {
+            if (stroke.points.length < 2) return;
+
+            targetCtx.beginPath();
+            targetCtx.strokeStyle = stroke.color;
+            targetCtx.lineWidth = stroke.size;
+            targetCtx.lineCap = 'round';
+            targetCtx.lineJoin = 'round';
+
+            if (stroke.type === 'brush') {
+                targetCtx.globalAlpha *= 0.3; // Multiply existing alpha for ghosts
+                targetCtx.shadowBlur = stroke.size / 2;
+                targetCtx.shadowColor = stroke.color;
+            } else if (stroke.type === 'pencil') {
+                targetCtx.globalAlpha *= 0.8;
+                targetCtx.setLineDash([1 / currentCam.zoom, 2 / currentCam.zoom]);
+            } else {
+                targetCtx.setLineDash([]);
+                targetCtx.shadowBlur = 0;
+            }
+
+            targetCtx.moveTo(stroke.points[0].x, stroke.points[0].y);
+            for (let i = 1; i < stroke.points.length; i++) {
+                targetCtx.lineTo(stroke.points[i].x, stroke.points[i].y);
+            }
+            targetCtx.stroke();
+        });
+    }
+
     // Core Rendering Engine
     function render() {
+        const now = Date.now();
+        
         // Clear screen
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // 1. Render Ghost Clones (Fading Tails)
+        ghosts = ghosts.filter(g => now - g.time < GHOST_DURATION);
+        ghosts.forEach(g => {
+            const age = now - g.time;
+            const alpha = 1.0 - (age / GHOST_DURATION);
+            
+            ctx.save();
+            ctx.globalAlpha = alpha * 0.4; // Initial ghost transparency
+            ctx.translate(g.x, g.y);
+            ctx.scale(g.zoom, g.zoom);
+            drawPaths(ctx, g);
+            ctx.restore();
+        });
+
+        // 2. Render Real Strokes (Single Instance)
         ctx.save();
         ctx.translate(camera.x, camera.y);
         ctx.scale(camera.zoom, camera.zoom);
-
-        // Render Strokes
-        strokes.forEach(stroke => {
-            if (stroke.points.length < 2) return;
-
-            ctx.beginPath();
-            ctx.strokeStyle = stroke.color;
-            ctx.lineWidth = stroke.size;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            if (stroke.type === 'brush') {
-                ctx.globalAlpha = 0.3;
-                ctx.shadowBlur = stroke.size / 2;
-                ctx.shadowColor = stroke.color;
-            } else if (stroke.type === 'pencil') {
-                ctx.globalAlpha = 0.8;
-                ctx.setLineDash([1 / camera.zoom, 2 / camera.zoom]);
-            } else {
-                ctx.globalAlpha = 1.0;
-                ctx.setLineDash([]);
-                ctx.shadowBlur = 0;
-            }
-
-            ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-            for (let i = 1; i < stroke.points.length; i++) {
-                ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
-            }
-            ctx.stroke();
-        });
-
+        ctx.globalAlpha = 1.0;
+        drawPaths(ctx, camera);
         ctx.restore();
 
-        // Render UI Feedback (Touch Glow) - Screen Space
+        // 3. Render UI Feedback (Touch Glow) - Screen Space
         visualTouches.forEach((t, i) => {
             ctx.beginPath();
             ctx.fillStyle = t.color;
@@ -403,7 +445,8 @@
             if (t.alpha <= 0) visualTouches.splice(i, 1);
         });
 
-        if (visualTouches.length > 0) {
+        // Keep loop alive if there are fading ghosts or touch effects
+        if (visualTouches.length > 0 || ghosts.length > 0) {
             requestAnimationFrame(render);
         }
     }
@@ -418,6 +461,7 @@
     function clearCanvas() {
         if(confirm("Clear all visionary artwork?")) {
             strokes = [];
+            ghosts = [];
             camera = { x: 0, y: 0, zoom: 1 };
             zoomDisplay.innerText = '100%';
             render();
@@ -453,22 +497,8 @@
         tCtx.save();
         tCtx.translate(camera.x * scaleMult, camera.y * scaleMult);
         tCtx.scale(camera.zoom * scaleMult, camera.zoom * scaleMult);
-
-        strokes.forEach(stroke => {
-            tCtx.beginPath();
-            tCtx.strokeStyle = stroke.color;
-            tCtx.lineWidth = stroke.size;
-            tCtx.lineCap = 'round';
-            tCtx.lineJoin = 'round';
-            if (stroke.type === 'brush') tCtx.globalAlpha = 0.3;
-            else tCtx.globalAlpha = 1.0;
-
-            tCtx.moveTo(stroke.points[0].x, stroke.points[0].y);
-            for (let i = 1; i < stroke.points.length; i++) {
-                tCtx.lineTo(stroke.points[i].x, stroke.points[i].y);
-            }
-            tCtx.stroke();
-        });
+        tCtx.globalAlpha = 1.0;
+        drawPaths(tCtx, camera);
         tCtx.restore();
 
         const link = document.createElement('a');
