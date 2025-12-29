@@ -1,4 +1,4 @@
-const GAME_VERSION = 'v1.8';
+const GAME_VERSION = 'v1.9';
 const CACHE_NAME = `algo-${GAME_VERSION}`;
 
 const ASSETS = [
