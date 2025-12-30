@@ -32,6 +32,39 @@
         .prose strong { color: #fff; font-weight: 600; }
         .copy-btn { opacity: 0; transition: opacity 0.2s; }
         .ai-bubble:hover .copy-btn { opacity: 1; }
+        
+        footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px 0;
+    display: flex;
+    justify-content: center; /* Centers horizontally */
+    align-items: center;     /* Centers vertically */
+    background: rgba(10, 10, 10, 0.8); /* Semi-transparent black */
+    backdrop-filter: blur(10px);       /* Matching your app's blur effect */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #666;
+    font-size: 14px;
+}
+
+footer a {
+    color: #007AFF; /* Your accent blue */
+    text-decoration: none;
+    margin-right: 10px;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+footer a:hover {
+    opacity: 0.7;
+}
+
+/* Removes the last separator bar | automatically */
+footer div span:last-child {
+    display: none;
+}
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -367,11 +400,8 @@ print("--- INITIALIZING TUNNEL ---")
     </script>
     <footer>
         <div>
-            <a href="artist.html">Sketch Canvas</a> |
-        </div>
-        <div class="visitor-counter-container">
-            <a href="https://www.hitwebcounter.com" target="_blank">
-            <img src="https://hitwebcounter.com/counter/counter.php?page=20795911&style=0009&nbdigits=6&type=ip&initCount=1" title="Counter Widget" Alt="Visit counter For Websites"   border="0" /></a>
+            <a href="artist.html">Sketch Canvas</a>
+            <span>|</span>
         </div>
     </footer>
 </body>
