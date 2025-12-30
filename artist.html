@@ -8,7 +8,7 @@
     <style>
         :root {
             --bg-color: #0a0a0a;
-            --ui-bg: rgba(30, 30, 30, 0.9);
+            --ui-bg: rgba(25, 25, 25, 0.95);
             --accent: #007AFF;
             --text: #ffffff;
         }
@@ -20,14 +20,28 @@
             overscroll-behavior: none;
         }
 
+        /* Initialization Layer */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 1000; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #333;
+            border-top: 4px solid var(--accent); border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         canvas { display: block; touch-action: none; background-color: #0a0a0a; }
 
         #ui-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
         .panel {
-            position: absolute; background: var(--ui-bg); backdrop-filter: blur(15px);
+            position: absolute; background: var(--ui-bg); backdrop-filter: blur(20px);
             border-radius: 14px; padding: 12px; pointer-events: auto;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.08);
             display: flex; gap: 12px; align-items: center;
         }
 
@@ -38,19 +52,18 @@
             max-height: 85vh; overflow-y: auto;
         }
 
-        #status-bar { top: 20px; left: 20px; font-size: 11px; color: var(--text); opacity: 0.8; font-weight: bold; }
+        #status-bar { top: 20px; left: 20px; font-size: 10px; color: var(--text); opacity: 0.8; font-weight: 800; letter-spacing: 1px; }
         #export-panel { top: 20px; right: 20px; display: flex; gap: 8px; }
 
         button, input[type="color"], select {
-            background: #222; border: none; color: white;
+            background: #1a1a1a; border: none; color: white;
             padding: 10px; border-radius: 10px; cursor: pointer;
             font-size: 16px; width: 48px; height: 48px;
             display: flex; align-items: center; justify-content: center;
         }
 
         select, #sizePicker { width: 65px; }
-        button:active { background: var(--accent); }
-        .tool-active { background: var(--accent) !important; box-shadow: 0 0 15px var(--accent); }
+        .tool-active { background: var(--accent) !important; box-shadow: 0 0 20px rgba(0,122,255,0.4); }
 
         input[type="range"] {
             writing-mode: bt-lr; -webkit-appearance: slider-vertical;
@@ -66,94 +79,75 @@
 
         .overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 99; pointer-events: auto;
+            background: rgba(0,0,0,0.9); z-index: 99; pointer-events: auto;
         }
         
-        .label-text { display: block; font-size: 9px; text-transform: uppercase; color: #999; letter-spacing: 1px; margin-bottom: 4px; }
+        .label-text { display: block; font-size: 9px; text-transform: uppercase; color: #777; letter-spacing: 1px; margin-bottom: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
 
+<div id="loader">
+    <div class="spinner"></div>
+    <p style="color: white; margin-top: 15px; font-size: 12px; letter-spacing: 2px;">INITIALIZING CANVAS</p>
+</div>
+
 <canvas id="canvas"></canvas>
 
 <div id="ui-layer">
-    <div id="status-bar" class="panel">ZOOM: <span id="zoom-val">100%</span></div>
-
+    <div id="status-bar" class="panel">Z: <span id="zoom-val">100%</span></div>
     <div id="export-panel" class="panel">
         <button onclick="showExport()" style="width: auto; padding: 0 15px;">Export</button>
         <button onclick="clearCanvas()" style="color: #ff4444; width: auto; padding: 0 15px;">Clear</button>
     </div>
-
     <div id="toolbar" class="panel">
         <span class="label-text">Color</span>
         <input type="color" id="colorPicker" value="#44ffaa">
-        
         <span class="label-text">Tool</span>
-        <select id="toolType">
-            <option value="pen">Pen</option>
-            <option value="brush">Brush</option>
-            <option value="pencil">Pencil</option>
-            <option value="eraser">Eraser</option>
-        </select>
-        
+        <select id="toolType"><option value="pen">Pen</option><option value="brush">Brush</option><option value="pencil">Pencil</option><option value="eraser">Eraser</option></select>
         <span class="label-text">Size</span>
         <input type="range" id="sizePicker" min="1" max="200" value="15">
-
         <span class="label-text">Flow</span>
         <input type="range" id="opacityPicker" min="1" max="100" value="100">
-        
-        <button id="btn-draw" class="tool-active" onclick="setMode('draw')" title="Draw Mode">✎</button>
-        <button id="btn-pan" onclick="setMode('pan')" title="Adjust Mode">✥</button>
+        <button id="btn-draw" class="tool-active" onclick="setMode('draw')">✎</button>
+        <button id="btn-pan" onclick="setMode('pan')">✥</button>
     </div>
 </div>
 
 <div id="export-modal-overlay" class="overlay" onclick="hideExport()"></div>
 <div id="export-modal">
     <h3 style="color:white; margin-top:0;">Precision Export</h3>
-    <label class="label-text">Resolution Width (px)</label>
+    <label class="label-text">Res Width (px)</label>
     <input type="number" id="expWidth" value="3840" style="width:100%; margin-bottom:15px; background:#000; color:#fff; border:1px solid #444; padding:8px; border-radius:8px;">
-    
     <label class="label-text">Format</label>
-    <select id="expFormat" style="width: 100%; margin-bottom: 15px; height: 45px;">
-        <option value="image/png">PNG (Lossless)</option>
-        <option value="image/jpeg">JPEG (Compressed)</option>
-    </select>
-
+    <select id="expFormat" style="width: 100%; margin-bottom: 15px; height: 45px;"><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option></select>
     <label class="label-text">Background</label>
-    <select id="expBG" style="width: 100%; margin-bottom: 15px; height: 45px;">
-        <option value="#0a0a0a">Black</option>
-        <option value="#ffffff">White</option>
-        <option value="transparent">Transparent</option>
-    </select>
-    
-    <button onclick="performExport()" style="width:100%; background: var(--accent); height:auto; padding:15px; font-weight:bold; border-radius:12px;">Save to Device</button>
+    <select id="expBG" style="width: 100%; margin-bottom: 15px; height: 45px;"><option value="#0a0a0a">Black</option><option value="#ffffff">White</option><option value="transparent">Transparent</option></select>
+    <button onclick="performExport()" style="width:100%; background: var(--accent); padding:15px; font-weight:bold; border-radius:12px;">Save to Device</button>
 </div>
 
 <script>
     const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true }); 
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
     const zoomDisplay = document.getElementById('zoom-val');
     
-    let strokes = [];
-    let currentStroke = null;
-    let camera = { x: 0, y: 0, zoom: 1 };
-    let mode = 'draw'; 
-    let isDragging = false;
-    let isPinching = false;
-    let crosshairActive = false;
-    let crosshairPos = { x: 0, y: 0 };
-    let crosshairOffset = { x: 0, y: 0 };
-    let initialPinchDist = 0;
-    let initialPinchZoom = 1;
-    let lastTapTime = 0;
-    let visualTouches = [];
+    let strokes = [], currentStroke = null, camera = { x: 0, y: 0, zoom: 1 };
+    let mode = 'draw', isDragging = false, isPinching = false;
+    let crosshairActive = false, crosshairPos = { x: 0, y: 0 }, crosshairOffset = { x: 0, y: 0 };
+    let initialPinchDist = 0, initialPinchZoom = 1, lastTapTime = 0, visualTouches = [];
+
+    window.onload = () => {
+        resize();
+        document.getElementById('loader').style.opacity = '0';
+        setTimeout(() => document.getElementById('loader').remove(), 500);
+        requestAnimationFrame(renderLoop);
+    };
 
     function resize() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
     window.addEventListener('resize', resize);
-    resize();
 
     function screenToWorld(sx, sy) {
         return { x: (sx - camera.x) / camera.zoom, y: (sy - camera.y) / camera.zoom };
@@ -171,30 +165,20 @@
             points: [{...pos, p: 0.5}]
         };
         strokes.push(currentStroke);
-        if (strokes.length > 500) strokes.shift();
     }
 
     canvas.addEventListener('touchstart', e => {
         if (mode === 'draw') {
             if (e.touches.length === 2) {
-                isPinching = true;
-                crosshairActive = true;
-                isDragging = false;
-                currentStroke = null;
-                const t1 = e.touches[0], t2 = e.touches[1];
-                crosshairPos.x = (t1.clientX + t2.clientX) / 2;
-                crosshairPos.y = (t1.clientY + t2.clientY) / 2;
+                isPinching = true; crosshairActive = true; isDragging = false; currentStroke = null;
+                crosshairPos.x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                crosshairPos.y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
             } else if (e.touches.length === 1) {
                 const now = Date.now();
-                if (now - lastTapTime < 300) {
-                    undo(); undo();
-                    lastTapTime = 0;
-                    return;
-                }
+                if (now - lastTapTime < 300) { undo(); undo(); lastTapTime = 0; return; }
                 lastTapTime = now;
                 isDragging = true;
                 startNewStroke(e.touches[0].clientX, e.touches[0].clientY);
-                addVisualTouch(e.touches[0].clientX, e.touches[0].clientY);
             }
         } else {
             if (e.touches.length === 2) {
@@ -215,14 +199,9 @@
                 crosshairPos.x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                 crosshairPos.y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
             } else if (isDragging && currentStroke) {
-                let x = e.touches[0].clientX;
-                let y = e.touches[0].clientY;
-                if (crosshairActive) {
-                    x -= crosshairOffset.x;
-                    y -= crosshairOffset.y;
-                }
-                const pos = screenToWorld(x, y);
-                currentStroke.points.push({...pos, p: 0.5});
+                let x = e.touches[0].clientX, y = e.touches[0].clientY;
+                if (crosshairActive) { x -= crosshairOffset.x; y -= crosshairOffset.y; }
+                currentStroke.points.push({...screenToWorld(x, y), p: 0.5});
             }
         } else {
             if (isPinching && e.touches.length === 2) {
@@ -241,9 +220,7 @@
     canvas.addEventListener('touchend', e => {
         if (mode === 'draw') {
             if (isPinching && e.touches.length === 1) {
-                isPinching = false;
-                isDragging = true;
-                // RELATIVE LOCK: Calculate how far the remaining finger is from the crosshair
+                isPinching = false; isDragging = true;
                 crosshairOffset.x = e.touches[0].clientX - crosshairPos.x;
                 crosshairOffset.y = e.touches[0].clientY - crosshairPos.y;
                 startNewStroke(crosshairPos.x, crosshairPos.y);
@@ -265,10 +242,6 @@
         zoomDisplay.innerText = Math.round(camera.zoom * 100) + '%';
     }
 
-    function addVisualTouch(x, y) {
-        visualTouches.push({ x, y, radius: 20, alpha: 0.6, color: document.getElementById('colorPicker').value });
-    }
-
     function drawPaths(tCtx, cam) {
         strokes.forEach(s => {
             if (!s.points.length) return;
@@ -283,43 +256,23 @@
                 tCtx.globalAlpha = s.opacity;
             }
             if (s.type === 'brush') {
-                tCtx.shadowBlur = (s.size * cam.zoom) / 3;
-                tCtx.shadowColor = s.color;
+                tCtx.shadowBlur = (s.size * cam.zoom) / 3; tCtx.shadowColor = s.color;
             } else if (s.type === 'pencil') {
-                tCtx.setLineDash([1 / cam.zoom, 2 / cam.zoom]);
-                tCtx.globalAlpha *= 0.6;
+                tCtx.setLineDash([1 / cam.zoom, 2 / cam.zoom]); tCtx.globalAlpha *= 0.6;
             }
             if (s.points.length === 1) {
-                tCtx.beginPath();
-                tCtx.arc(s.points[0].x, s.points[0].y, s.size/2, 0, Math.PI*2);
-                tCtx.fill();
+                tCtx.beginPath(); tCtx.arc(s.points[0].x, s.points[0].y, s.size/2, 0, Math.PI*2); tCtx.fill();
             } else {
-                tCtx.beginPath();
-                tCtx.moveTo(s.points[0].x, s.points[0].y);
+                tCtx.beginPath(); tCtx.moveTo(s.points[0].x, s.points[0].y);
                 s.points.forEach(p => tCtx.lineTo(p.x, p.y));
-                tCtx.lineWidth = s.size;
-                tCtx.stroke();
+                tCtx.lineWidth = s.size; tCtx.stroke();
             }
             tCtx.restore();
         });
     }
 
-    function drawCrosshair() {
-        if (!crosshairActive) return;
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.strokeStyle = "#00ff66";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(crosshairPos.x - 40, crosshairPos.y); ctx.lineTo(crosshairPos.x + 40, crosshairPos.y);
-        ctx.moveTo(crosshairPos.x, crosshairPos.y - 40); ctx.lineTo(crosshairPos.x, crosshairPos.y + 40);
-        ctx.stroke();
-        ctx.beginPath(); ctx.arc(crosshairPos.x, crosshairPos.y, 15, 0, Math.PI * 2); ctx.stroke();
-        ctx.restore();
-    }
-
     function renderLoop() {
-        // HARD WIPE: Prevents all Adjust Mode trails
+        // High-Speed Buffer Wipe: Solves all trail issues
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -330,23 +283,22 @@
         drawPaths(ctx, camera);
         ctx.restore();
 
-        drawCrosshair();
-
-        visualTouches.forEach((t, i) => {
-            ctx.beginPath(); ctx.fillStyle = t.color; ctx.globalAlpha = t.alpha;
-            ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2); ctx.fill();
-            t.alpha -= 0.05; t.radius += 1;
-            if (t.alpha <= 0) visualTouches.splice(i, 1);
-        });
-
+        if (crosshairActive) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.strokeStyle = "#00ff66"; ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(crosshairPos.x - 40, crosshairPos.y); ctx.lineTo(crosshairPos.x + 40, crosshairPos.y);
+            ctx.moveTo(crosshairPos.x, crosshairPos.y - 40); ctx.lineTo(crosshairPos.x, crosshairPos.y + 40);
+            ctx.stroke();
+            ctx.beginPath(); ctx.arc(crosshairPos.x, crosshairPos.y, 15, 0, Math.PI * 2); ctx.stroke();
+        }
         requestAnimationFrame(renderLoop);
     }
 
     function setMode(m) {
-        mode = m;
-        isDragging = false; crosshairActive = false; currentStroke = null;
-        document.getElementById('btn-draw').classList.toggle('tool-active', m === 'draw');
-        document.getElementById('btn-pan').classList.toggle('tool-active', m === 'pan');
+        mode = m; isDragging = false; crosshairActive = false; currentStroke = null;
+        document.getElementById('btn-draw').className = m==='draw'?'tool-active':'';
+        document.getElementById('btn-pan').className = m==='pan'?'tool-active':'';
     }
 
     function clearCanvas() { if(confirm("Clear Blackboard?")) { strokes = []; camera = {x:0,y:0,zoom:1}; } }
@@ -362,7 +314,7 @@
         }));
         const pad = Math.max(maxX - minX, maxY - minY) * 0.05;
         minX -= pad; minY -= pad; maxX += pad; maxY += pad;
-        const width = parseInt(document.getElementById('expWidth').value) || 3840;
+        const width = parseInt(document.getElementById('expWidth').value);
         const scale = width / (maxX - minX);
         const height = (maxY - minY) * scale;
         const out = document.createElement('canvas');
@@ -374,16 +326,10 @@
         drawPaths(octx, { zoom: scale });
         octx.restore();
         const link = document.createElement('a');
-        link.download = `visionary-art-${Date.now()}.png`;
+        link.download = `art-${Date.now()}.png`;
         link.href = out.toDataURL(document.getElementById('expFormat').value);
         link.click(); hideExport();
     }
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
-    }
-
-    requestAnimationFrame(renderLoop);
 </script>
 </body>
 </html>
