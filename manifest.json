@@ -1,9 +1,8 @@
 {
-  "name": " Infinite-Canvas",
-  "short_name": "Artistic",
-  "start_url": "./index.html",
+  "name": "Gemma AI",
+  "short_name": "Gemma",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#c0392b",
-  "orientation": "landscape",
+  "theme_color": "#000000"
 }
