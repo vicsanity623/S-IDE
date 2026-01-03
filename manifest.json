@@ -1,7 +1,7 @@
 {
-  "name": "Visionary Studio",
-  "short_name": "Visionary",
-  "start_url": "index.html",
+  "name": "Learn to code",
+  "short_name": "Learn",
+  "start_url": "coding.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
