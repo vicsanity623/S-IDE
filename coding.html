@@ -109,6 +109,645 @@
         .success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
         .error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
 
+        /* STUDIO STYLES */
+        .studio-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: calc(100vh - 180px); }
+        .editor-stack { display: flex; flex-direction: column; gap: 10px; }
+        .editor-window { flex: 1; display: flex; flex-direction: column; background: #0f172a; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        .editor-label { background: #1e293b; padding: 5px 15px; font-size: 0.7rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        .studio-textarea { flex: 1; width: 100%; background: transparent; border: none; padding: 10px; color: #38bdf8; font-family: 'Fira Code', monospace; font-size: 0.85rem; margin: 0; }
+        .preview-window { display: flex; flex-direction: column; gap: 10px; }
+        #studio-iframe { flex: 2; width: 100%; background: white; border-radius: 12px; border: none; }
+        .studio-console { flex: 1; background: #000; border-radius: 12px; border: 1px solid var(--border); padding: 15px; font-family: 'Fira Code', monospace; overflow-y: auto; font-size: 0.8rem; }
+        .console-log { color: #e2e8f0; margin-bottom: 4px; }
+        .console-error { color: #f87171; margin-bottom: 4px; font-weight: 600; }
+        .console-tip { color: #fbbf24; font-style: italic; margin-top: 5px; border-top: 1px solid #333; padding-top: 5px; }
+
+        /* MOBILE HELPER BAR - NEW */
+        .coding-helper-bar {
+            display: flex;
+            gap: 5px;
+            padding: 5px 10px;
+            background: #1e293b;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .helper-btn {
+            background: rgba(255,255,255,0.1);
+            color: var(--text);
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .helper-btn:active { background: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">DEVQUEST ACADEMY</div>
+        <div id="nav-controls" class="hidden">
+            <button class="secondary-btn" onclick="showMainMenu()" style="padding: 8px 16px; font-size: 0.8rem;">Main Menu</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Main Menu -->
+        <div id="main-menu">
+            <div class="hero">
+                <h1>The Future of Learning</h1>
+                <p>A zero-to-pro coding roadmap. Study the deep-dive guide, then test your skills to unlock the path to mastery.</p>
+            </div>
+            
+            <div class="menu-grid">
+                <div class="menu-card" onclick="openLibrary()">
+                    <h2>Study Library</h2>
+                    <p>Essential for beginners. Read detailed explanations and examples of every topic.</p>
+                </div>
+                <div class="menu-card" onclick="startGame()">
+                    <h2>Game Path</h2>
+                    <p>Test your proficiency and unlock levels from HTML to Advanced Security.</p>
+                </div>
+                <div class="menu-card" onclick="openStudio()" style="border-color: var(--accent);">
+                    <h2 style="color: var(--accent);">Write Code</h2>
+                    <p>Free practice whiteboard. Write code, see results, and get smart error tips.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Library Section -->
+        <div id="library-section" class="hidden">
+            <div class="library-layout">
+                <div class="sidebar" id="lib-nav">
+                    <!-- Topics injected here -->
+                </div>
+                <div class="content-body" id="lib-content">
+                    <!-- Content injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Section -->
+        <div id="game-section" class="hidden">
+            <div class="game-panel">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span id="mod-title" style="color: var(--secondary); font-weight: 800;">LEVEL 1: HTML Basics</span>
+                    <span id="mod-progress">1 / 12</span>
+                </div>
+                <div class="progress-container"><div class="progress-fill" id="progress-bar"></div></div>
+                
+                <h2 id="q-text" style="margin-bottom: 30px;">How do you define a level-one heading?</h2>
+                
+                <div id="q-options" class="menu-grid" style="grid-template-columns: 1fr; gap: 10px;">
+                    <!-- Options injected here -->
+                </div>
+
+                <div id="q-editor" class="hidden">
+                    <textarea id="code-input" placeholder="Type your code here..."></textarea>
+                    <button class="primary-btn" onclick="validateCode()">Verify Proficiency</button>
+                </div>
+
+                <div id="game-feedback" class="feedback hidden"></div>
+                
+                <div style="margin-top: 40px; text-align: center;">
+                    <button class="secondary-btn" onclick="openLibrary()" style="font-size: 0.8rem;">Need to Study this topic?</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Studio Section -->
+        <div id="studio-section" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0; color:var(--accent);">DevStudio Whiteboard</h2>
+                <button class="primary-btn" onclick="runStudioCode()" style="background:var(--accent); padding:10px 25px;">▶ RUN & PREVIEW</button>
+            </div>
+            <div class="studio-layout">
+                <div class="editor-stack">
+                    <div class="editor-window">
+                        <div class="editor-label">HTML</div>
+                        <div class="coding-helper-bar">
+                            <button class="helper-btn" onclick="insertStudio('s-html', '  ')">TAB</button>
+                            <button class="helper-btn" onclick="insertStudio('s-html', '<')">&lt;</button>
+                            <button class="helper-btn" onclick="insertStudio('s-html', '>')">&gt;</button>
+                            <button class="helper-btn" onclick="insertStudio('s-html', '/')">/</button>
+                            <button class="helper-btn" onclick="insertStudio('s-html', '\"')">"</button>
+                        </div>
+                        <textarea id="s-html" class="studio-textarea" spellcheck="false"><h1>Hello World</h1></textarea>
+                    </div>
+                    <div class="editor-window">
+                        <div class="editor-label">CSS</div>
+                        <div class="coding-helper-bar">
+                            <button class="helper-btn" onclick="insertStudio('s-css', '  ')">TAB</button>
+                            <button class="helper-btn" onclick="insertStudio('s-css', '{')">{</button>
+                            <button class="helper-btn" onclick="insertStudio('s-css', '}')">}</button>
+                            <button class="helper-btn" onclick="insertStudio('s-css', ';')">;</button>
+                            <button class="helper-btn" onclick="insertStudio('s-css', ':')">:</button>
+                        </div>
+                        <textarea id="s-css" class="studio-textarea" spellcheck="false">h1 { color: #8b5cf6; }</textarea>
+                    </div>
+                    <div class="editor-window">
+                        <div class="editor-label">JS</div>
+                        <div class="coding-helper-bar">
+                            <button class="helper-btn" onclick="insertStudio('s-js', '  ')">TAB</button>
+                            <button class="helper-btn" onclick="insertStudio('s-js', '(')">(</button>
+                            <button class="helper-btn" onclick="insertStudio('s-js', ')')">)</button>
+                            <button class="helper-btn" onclick="insertStudio('s-js', ';')">;</button>
+                            <button class="helper-btn" onclick="insertStudio('s-js', '\"')">"</button>
+                        </div>
+                        <textarea id="s-js" class="studio-textarea" spellcheck="false">console.log("Ready!");</textarea>
+                    </div>
+                </div>
+                <div class="preview-window">
+                    <div class="editor-label" style="background:#475569; border:none; border-radius:12px 12px 0 0;">Live Result</div>
+                    <iframe id="studio-iframe"></iframe>
+                    <div class="studio-console" id="s-console">
+                        <div style="color:var(--secondary); font-size:0.6rem; margin-bottom:10px; text-transform:uppercase;">Debug Console</div>
+                        <div id="console-output"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Structure
+        const academyData = [
+            {
+                id: "html",
+                title: "HTML Foundation",
+                difficulty: "Beginner",
+                explanation: `
+                    <h1>1. HTML: The Global Structure</h1>
+                    <p>HTML is a <b>Markup Language</b>. It uses "Tags" to tell the browser what a piece of content is (a heading, a button, a list).</p>
+                    
+                    <h3>10 Essential Concepts:</h3>
+                    <ul>
+                        <li><b>The Anatomy:</b> A tag usually looks like this: <code>&lt;tag&gt;Content&lt;/tag&gt;</code>.</li>
+                        <li><b>Headings:</b> <code>&lt;h1&gt;</code> is the most important title. <code>&lt;h2&gt;</code> through <code>&lt;h6&gt;</code> are sub-titles.</li>
+                        <li><b>Paragraphs:</b> Use <code>&lt;p&gt;</code> for any standard block of text.</li>
+                        <li><b>Links:</b> Use <code>&lt;a href="URL"&gt;</code>. The 'href' (Hypertext Reference) is the destination.</li>
+                        <li><b>Images:</b> Use <code>&lt;img src="path"&gt;</code>. Note: This tag is "self-closing" (no ending tag).</li>
+                        <li><b>Lists (Unordered):</b> <code>&lt;ul&gt;</code> creates bullet points; <code>&lt;li&gt;</code> defines items inside.</li>
+                        <li><b>Lists (Ordered):</b> <code>&lt;ol&gt;</code> creates numbered lists.</li>
+                        <li><b>Buttons:</b> <code>&lt;button&gt;</code> creates a clickable element.</li>
+                        <li><b>Divisions:</b> <code>&lt;div&gt;</code> is an invisible box used to group other elements together.</li>
+                        <li><b>Attributes:</b> Extra info inside a tag, like <code>class="name"</code> or <code>id="unique"</code>.</li>
+                    </ul>
+        
+                    <div class="example-box">
+                        &lt;!-- Example of a proper link --&gt;<br>
+                        &lt;a href="https://google.com"&gt;Go to Google&lt;/a&gt;
+                    </div>
+                `,
+                question: "Which tag is used specifically for the main, most important heading of a page?",
+                type: "choice",
+                options: ["<head>", "<h6>", "<h1>", "<main>"],
+                answer: 2
+            },
+            {
+                id: "css",
+                title: "CSS Presentation",
+                difficulty: "Beginner",
+                explanation: `
+                    <h1>2. CSS: The Visual Grammar</h1>
+                    <p>CSS is all about targeting an HTML element and applying a visual rule to it.</p>
+                    
+                    <h3>The Rule Formula:</h3>
+                    <div class="example-box">
+                        selector { <br>
+                        &nbsp;&nbsp;property: value;<br>
+                        }
+                    </div>
+        
+                    <h3>10 Essential Concepts:</h3>
+                    <ul>
+                        <li><b>Selectors:</b> The name of the HTML tag you want to style (e.g., <code>p</code>, <code>h1</code>, <code>button</code>).</li>
+                        <li><b>Declaration Block:</b> Everything inside the <code>{ }</code> curly braces.</li>
+                        <li><b>Properties:</b> The specific attribute you want to change (e.g., <code>color</code>, <code>font-size</code>).</li>
+                        <li><b>Values:</b> The setting you apply (e.g., <code>red</code>, <code>20px</code>).</li>
+                        <li><b>The Semicolon:</b> Every line inside the braces <b>must</b> end with a <code>;</code> or the code breaks.</li>
+                        <li><b>Colors:</b> Use <code>color: blue;</code> for text and <code>background-color: black;</code> for boxes.</li>
+                        <li><b>Font Size:</b> Controlled by <code>font-size: 16px;</code>.</li>
+                        <li><b>Margin:</b> Space <b>outside</b> the element's border.</li>
+                        <li><b>Padding:</b> Space <b>inside</b> the element, between content and border.</li>
+                        <li><b>Border:</b> The physical line around the box: <code>border: 1px solid black;</code>.</li>
+                    </ul>
+        
+                    <h3>How-To (The "Color" Rule):</h3>
+                    <p>To turn paragraphs red, the selector is <b>p</b>, the property is <b>color</b>, and the value is <b>red</b>.</p>
+                `,
+                question: "Write the CSS selector that would change the color of all <p> tags to 'red'.",
+                type: "code",
+                check: (val) => val.replace(/\s/g, '').includes("p{color:red;}")
+            },
+            {
+                id: "js",
+                title: "JavaScript Logic",
+                difficulty: "Beginner",
+                explanation: `
+                    <h1>3. JavaScript: The Action</h1>
+                    <p>JavaScript is the programming language that lets your website "think."</p>
+        
+                    <h3>10 Essential Concepts:</h3>
+                    <ul>
+                        <li><b>Variables (let):</b> A box for data that <b>can</b> change later.</li>
+                        <li><b>Variables (const):</b> Short for "Constant." A box for data that <b>never</b> changes.</li>
+                        <li><b>Strings:</b> Text data wrapped in quotes: <code>"Hello World"</code>.</li>
+                        <li><b>Numbers:</b> Math data (no quotes): <code>42</code>.</li>
+                        <li><b>Booleans:</b> Simple <code>true</code> or <code>false</code> values.</li>
+                        <li><b>Functions:</b> A saved "recipe" of code: <code>function name() { ... }</code>.</li>
+                        <li><b>Calling a Function:</b> To run the recipe, use: <code>name();</code>.</li>
+                        <li><b>Alerts:</b> A popup box: <code>alert("Hi!");</code>.</li>
+                        <li><b>Console Log:</b> Sending messages to the developer tool: <code>console.log("Debug");</code>.</li>
+                        <li><b>Comments:</b> Use <code>//</code> to write notes the computer ignores.</li>
+                    </ul>
+        
+                    <div class="example-box">
+                        const price = 100; // This value is locked<br>
+                        let score = 0; // This value can be updated
+                    </div>
+                `,
+                question: "What keyword is used to declare a variable that is constant and cannot be changed later?",
+                type: "choice",
+                options: ["let", "var", "const", "change"],
+                answer: 2
+            },
+            {
+                id: "dom",
+                title: "The DOM",
+                difficulty: "Intermediate",
+                explanation: `
+                    <h1>4. The DOM: The Bridge</h1>
+                    <p>The DOM (Document Object Model) is how your JavaScript finds and edits your HTML.</p>
+        
+                    <h3>10 Essential Concepts:</h3>
+                    <ul>
+                        <li><b>Selecting by ID:</b> <code>document.getElementById('id-name')</code> finds one specific thing.</li>
+                        <li><b>Query Selector:</b> <code>document.querySelector('.class')</code> finds things using CSS style names.</li>
+                        <li><b>Changing Text:</b> Use <code>.innerText = "New Text"</code> to swap words.</li>
+                        <li><b>Changing Style:</b> Use <code>.style.color = "blue"</code> to change CSS via JS.</li>
+                        <li><b>Event Listeners:</b> Waiting for a user to do something: <code>.addEventListener('click', ...)</code>.</li>
+                        <li><b>Click Events:</b> The most common event for buttons.</li>
+                        <li><b>Input Values:</b> Getting what a user typed: <code>element.value</code>.</li>
+                        <li><b>Classes:</b> Adding a CSS class via JS: <code>.classList.add('hidden')</code>.</li>
+                        <li><b>Creating Elements:</b> Making new HTML on the fly: <code>document.createElement('div')</code>.</li>
+                        <li><b>Appending:</b> Putting a new element into the page: <code>document.body.appendChild(el)</code>.</li>
+                    </ul>
+        
+                    <h3>How-To: Finding an element</h3>
+                    <p>If your HTML is <code>&lt;button id="submit"&gt;</code>, your JS finds it using the <b>ID</b> inside quotes.</p>
+                `,
+                question: "Write the JavaScript command to find an element with the ID 'btn'.",
+                type: "code",
+                check: (val) => val.includes("document.getElementById('btn')") || val.includes("document.querySelector('#btn')")
+            },
+            {
+                id: "git",
+                title: "Version Control (Git)",
+                difficulty: "Intermediate",
+                explanation: `
+                    <h1>5. Git: The Save System</h1>
+                    <p>Git tracks changes in your project files so you can undo mistakes or collaborate with others.</p>
+        
+                    <h3>10 Essential Concepts:</h3>
+                    <ul>
+                        <li><b>Repository (Repo):</b> The "Project Folder" that Git is watching.</li>
+                        <li><b>Init:</b> <code>git init</code> starts Git inside a new folder.</li>
+                        <li><b>The Stage:</b> A middle-ground where you pick which files to save.</li>
+                        <li><b>Add:</b> <code>git add .</code> puts all your changes onto the "Stage."</li>
+                        <li><b>Commit:</b> <code>git commit -m "msg"</code> permanently saves the staged changes.</li>
+                        <li><b>The Message:</b> Every commit needs a <code>-m</code> message explaining the change.</li>
+                        <li><b>Push:</b> Sending your local saves up to GitHub (the cloud).</li>
+                        <li><b>Pull:</b> Downloading the latest changes from the cloud to your computer.</li>
+                        <li><b>Status:</b> <code>git status</code> tells you what has changed since the last save.</li>
+                        <li><b>Log:</b> <code>git log</code> shows you a history of all your past "Commits."</li>
+                    </ul>
+        
+                    <div class="example-box">
+                        Step 1: git add . <br>
+                        Step 2: git commit -m "Fixed the header"
+                    </div>
+                `,
+                question: "Which command is used to permanently save your staged changes in the history?",
+                type: "choice",
+                options: ["git save", "git commit", "git push", "git init"],
+                answer: 1
+            }
+        ];
+
+        let currentLevel = 0;
+
+        function showMainMenu() {
+            document.getElementById('main-menu').classList.remove('hidden');
+            document.getElementById('library-section').classList.add('hidden');
+            document.getElementById('game-section').classList.add('hidden');
+            document.getElementById('studio-section').classList.add('hidden');
+            document.getElementById('nav-controls').classList.add('hidden');
+        }
+
+        function openLibrary(topicIndex = 0) {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('game-section').classList.add('hidden');
+            document.getElementById('studio-section').classList.add('hidden');
+            document.getElementById('library-section').classList.remove('hidden');
+            document.getElementById('nav-controls').classList.remove('hidden');
+            renderLibraryNav(topicIndex);
+            renderLibraryContent(topicIndex);
+        }
+
+        function renderLibraryNav(activeIdx) {
+            const nav = document.getElementById('lib-nav');
+            nav.innerHTML = '<h3 style="margin-bottom:15px">Topics</h3>';
+            academyData.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = `lib-nav-item ${idx === activeIdx ? 'active' : ''}`;
+                div.innerText = `${idx + 1}. ${item.title}`;
+                div.onclick = () => openLibrary(idx);
+                nav.appendChild(div);
+            });
+        }
+
+        function renderLibraryContent(idx) {
+            document.getElementById('lib-content').innerHTML = academyData[idx].explanation;
+        }
+
+        function startGame() {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('library-section').classList.add('hidden');
+            document.getElementById('studio-section').classList.add('hidden');
+            document.getElementById('game-section').classList.remove('hidden');
+            document.getElementById('nav-controls').classList.remove('hidden');
+            loadLevel();
+        }
+
+        function loadLevel() {
+            const level = academyData[currentLevel];
+            document.getElementById('mod-title').innerText = `LEVEL ${currentLevel + 1}: ${level.title}`;
+            document.getElementById('mod-progress').innerText = `${currentLevel + 1} / ${academyData.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentLevel + 1) / academyData.length) * 100}%`;
+            document.getElementById('q-text').innerText = level.question;
+            document.getElementById('game-feedback').classList.add('hidden');
+
+            if (level.type === 'choice') {
+                document.getElementById('q-options').classList.remove('hidden');
+                document.getElementById('q-editor').classList.add('hidden');
+                renderOptions(level.options);
+            } else {
+                document.getElementById('q-options').classList.add('hidden');
+                document.getElementById('q-editor').classList.remove('hidden');
+                document.getElementById('code-input').value = '';
+            }
+        }
+
+        function renderOptions(opts) {
+            const container = document.getElementById('q-options');
+            container.innerHTML = '';
+            opts.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkChoice(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkChoice(idx) {
+            if (idx === academyData[currentLevel].answer) {
+                nextLevel();
+            } else {
+                showFeedback(false, "That's not quite right. Try reading the Study Guide for this topic!");
+            }
+        }
+
+        function validateCode() {
+            const val = document.getElementById('code-input').value;
+            if (academyData[currentLevel].check(val)) {
+                nextLevel();
+            } else {
+                showFeedback(false, "Code validation failed. Check your syntax or visit the Study Guide.");
+            }
+        }
+
+        function showFeedback(success, text) {
+            const el = document.getElementById('game-feedback');
+            el.innerText = text;
+            el.className = `feedback ${success ? 'success' : 'error'}`;
+            el.classList.remove('hidden');
+        }
+
+        function nextLevel() {
+            showFeedback(true, "Mastery Confirmed! Unlocking next level...");
+            setTimeout(() => {
+                currentLevel++;
+                if (currentLevel < academyData.length) {
+                    loadLevel();
+                } else {
+                    alert("CONGRATULATIONS! You have completed the foundation path!");
+                    showMainMenu();
+                    currentLevel = 0;
+                }
+            }, 1500);
+        }
+
+        function openStudio() {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('game-section').classList.add('hidden');
+            document.getElementById('library-section').classList.add('hidden');
+            document.getElementById('studio-section').classList.remove('hidden');
+            document.getElementById('nav-controls').classList.remove('hidden');
+            runStudioCode();
+        }
+
+        function runStudioCode() {
+            const html = document.getElementById('s-html').value;
+            const css = document.getElementById('s-css').value;
+            const js = document.getElementById('s-js').value;
+            const iframe = document.getElementById('studio-iframe');
+            const output = document.getElementById('console-output');
+            output.innerHTML = "";
+            const combinedCode = `
+                <html>
+                    <head><style>${css}</style></head>
+                    <body>
+                        ${html}
+                        <script>
+                            const originalLog = console.log;
+                            console.log = function(...args) {
+                                window.parent.postMessage({type: 'log', val: args.join(' ')}, '*');
+                                originalLog.apply(console, args);
+                            };
+                            window.onerror = function(msg) {
+                                window.parent.postMessage({type: 'error', val: msg}, '*');
+                            };
+                        <\/script>
+                        <script>${js}<\/script>
+                    </body>
+                </html>
+            `;
+            iframe.srcdoc = combinedCode;
+        }
+
+        /* NEW HELPER FUNCTION FOR MOBILE TABBING */
+        function insertStudio(id, text) {
+            const el = document.getElementById(id);
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+            const currentVal = el.value;
+            el.value = currentVal.substring(0, start) + text + currentVal.substring(end);
+            el.selectionStart = el.selectionEnd = start + text.length;
+            el.focus();
+        }
+
+        window.addEventListener('message', (e) => {
+            const output = document.getElementById('console-output');
+            const div = document.createElement('div');
+            if(e.data.type === 'log') {
+                div.className = 'console-log';
+                div.innerText = "> " + e.data.val;
+            } else if(e.data.type === 'error') {
+                div.className = 'console-error';
+                div.innerText = "❌ Error: " + e.data.val;
+                const tip = document.createElement('div');
+                tip.className = 'console-tip';
+                tip.innerText = getSmartTip(e.data.val);
+                div.appendChild(tip);
+            }
+            output.appendChild(div);
+        });
+
+        function getSmartTip(err) {
+            if(err.includes('unexpected token')) return "TIP: Check for a missing semicolon (;) or an unclosed brace {}.";
+            if(err.includes('not defined')) return "TIP: You are using a variable name that doesn't exist. Check your spelling!";
+            if(err.includes('assignment to constant')) return "TIP: You tried to change a 'const' variable. Use 'let' instead.";
+            return "TIP: Review the Study Library for the correct syntax rules.";
+        }
+
+        // SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('SW Registered');
+                }).catch(err => {
+                    console.log('SW Registration Failed', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevQuest: Coding Academy</title>
+    <!-- PWA / iOS Standalone Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DevQuest">
+    <meta name="theme-color" content="#000000">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030712;
+            --card: rgba(17, 24, 39, 0.8);
+            --primary: #8b5cf6;
+            --secondary: #06b6d4;
+            --accent: #10b981;
+            --text: #f9fafb;
+            --text-dim: #9ca3af;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; transition: all 0.3s ease; }
+
+        body {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #030712);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo { font-weight: 800; font-size: 1.5rem; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Main Menu */
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+
+        .hero { text-align: center; margin-bottom: 60px; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 10px; }
+        .hero p { color: var(--text-dim); font-size: 1.2rem; max-width: 600px; margin: 0 auto; }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .menu-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 40px;
+            border-radius: 24px;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card:hover { border-color: var(--primary); transform: translateY(-10px); background: rgba(31, 41, 55, 0.9); }
+        .menu-card h2 { font-size: 2rem; margin-bottom: 10px; }
+        .menu-card p { color: var(--text-dim); }
+
+        /* Library & Study Guide */
+        .library-layout { display: grid; grid-template-columns: 280px 1fr; gap: 30px; }
+        .sidebar { background: var(--card); border-radius: 20px; padding: 20px; height: calc(100vh - 150px); position: sticky; top: 100px; overflow-y: auto; border: 1px solid var(--border); }
+        .lib-nav-item { padding: 12px 16px; border-radius: 10px; cursor: pointer; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-dim); }
+        .lib-nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+        .lib-nav-item.active { background: var(--primary); color: white; font-weight: 600; }
+
+        .content-body { background: var(--card); border-radius: 24px; padding: 40px; border: 1px solid var(--border); line-height: 1.7; }
+        .content-body h1 { color: var(--secondary); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .example-box { background: #000; border-radius: 12px; padding: 20px; font-family: 'Fira Code', monospace; margin: 20px 0; border-left: 4px solid var(--primary); }
+
+        /* Game UI */
+        .game-panel { max-width: 800px; margin: 0 auto; background: var(--card); border-radius: 30px; padding: 50px; border: 1px solid var(--border); }
+        .progress-container { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-bottom: 30px; }
+        .progress-fill { height: 100%; background: linear-gradient(to right, var(--primary), var(--secondary)); width: 0%; border-radius: 4px; }
+
+        .option-btn { width: 100%; padding: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: white; border-radius: 15px; margin-bottom: 12px; cursor: pointer; text-align: left; font-size: 1rem; }
+        .option-btn:hover { background: var(--primary); border-color: var(--primary); }
+
+        textarea { width: 100%; height: 150px; background: #000; border: 1px solid var(--border); border-radius: 15px; padding: 20px; color: #10b981; font-family: 'Fira Code', monospace; margin-bottom: 20px; resize: none; outline: none; }
+
+        button.primary-btn { background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        button.secondary-btn { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 15px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+        .hidden { display: none !important; }
+        .feedback { padding: 15px; border-radius: 12px; margin-top: 20px; font-weight: 600; }
+        .success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
         /* WRITE CODE SECTION STYLES - NEW ADDITION */
         .studio-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: calc(100vh - 180px); }
         .editor-stack { display: flex; flex-direction: column; gap: 10px; }
