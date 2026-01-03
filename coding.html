@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevMaster: The Full-Stack Path</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #020617;
+            --glass: rgba(15, 23, 42, 0.8);
+            --border: rgba(255, 255, 255, 0.1);
+            --primary: #a855f7;
+            --secondary: #06b6d4;
+            --accent: #10b981;
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * { box-sizing: border-box; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        body {
+            margin: 0;
+            font-family: 'Plus+Jakarta+Sans', sans-serif;
+            background: radial-gradient(circle at 0% 0%, #1e1b4b 0%, #020617 50%),
+                        radial-gradient(circle at 100% 100%, #312e81 0%, #020617 50%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Layout */
+        .app-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            width: 95%;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            height: fit-content;
+            position: sticky;
+            top: 40px;
+        }
+
+        .sidebar h2 { font-size: 1.2rem; margin-bottom: 20px; color: var(--primary); }
+
+        .module-link {
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .module-link:hover { background: rgba(255,255,255,0.08); }
+        .module-link.active { background: var(--primary); color: white; }
+        .module-link.locked { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+
+        .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.3); }
+
+        /* Main Content Area */
+        .main-content {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Study Mode Styles */
+        .study-section h1 { font-size: 2.5rem; margin-bottom: 8px; background: linear-gradient(to right, #c084fc, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .study-section h3 { color: var(--secondary); margin-top: 24px; }
+        .code-example { background: #000; padding: 20px; border-radius: 12px; font-family: 'Fira Code', monospace; margin: 16px 0; border-left: 4px solid var(--secondary); white-space: pre-wrap; font-size: 0.9rem; position: relative; }
+        .code-example::after { content: "EXAMPLE"; position: absolute; top: 8px; right: 12px; font-size: 0.6rem; color: var(--text-dim); }
+
+        /* Quiz Styles */
+        .quiz-card { margin-top: 30px; padding-top: 30px; border-top: 1px solid var(--border); }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+        .option-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 16px; border-radius: 12px; cursor: pointer; text-align: left; font-size: 1rem; }
+        .option-btn:hover { background: var(--primary); border-color: var(--primary); transform: translateY(-2px); }
+
+        /* Code Input Area */
+        .editor-box { margin-top: 20px; }
+        textarea { width: 100%; height: 150px; background: #0f172a; color: #38bdf8; border: 1px solid #334155; border-radius: 12px; padding: 16px; font-family: 'Fira Code', monospace; font-size: 1rem; outline: none; resize: none; }
+        
+        /* UI Components */
+        .btn-main { background: var(--primary); color: white; border: none; padding: 12px 32px; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 1rem; margin-top: 20px; }
+        .btn-main:hover { filter: brightness(1.2); transform: scale(1.05); }
+
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .progress-track { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-bottom: 30px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; }
+
+        .feedback { margin-top: 20px; padding: 16px; border-radius: 12px; font-weight: 600; display: none; }
+        .feedback.success { display: block; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+        .feedback.error { display: block; background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+
+        .category-tag { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--secondary); margin-bottom: 8px; display: block;}
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Navigation -->
+        <div class="sidebar">
+            <h2>DevQuest Path</h2>
+            <div id="module-list">
+                <!-- Modules will be injected here -->
+            </div>
+            
+            <div style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px;">
+                <button class="btn-main" onclick="resetGame()" style="width: 100%; background: #334155; font-size: 0.8rem;">Reset Progress</button>
+            </div>
+        </div>
+
+        <!-- Main Gameplay -->
+        <div class="main-content">
+            <div id="welcome-screen">
+                <span class="category-tag">Full-Stack Roadmap 2025</span>
+                <h1>Master the Code</h1>
+                <p>Welcome to the ultimate interactive roadmap. Instead of just watching, you will study each concept and then prove your proficiency to unlock the next stage of your career.</p>
+                <div class="code-example">
+function startJourney() {
+  const status = "Ready";
+  return status === "Ready" ? "Let's Go!" : "Study Harder";
+}</div>
+                <button class="btn-main" onclick="startModule(0)">Begin with HTML Basics</button>
+            </div>
+
+            <div id="game-area" class="hidden">
+                <div class="progress-header">
+                    <span id="current-difficulty" class="badge">BEGINNER</span>
+                    <span id="progress-text">Module 1 of 12</span>
+                </div>
+                <div class="progress-track"><div class="progress-fill" id="progress-bar"></div></div>
+
+                <!-- Study View -->
+                <div id="study-view">
+                    <span class="category-tag" id="study-tag">Concept Study</span>
+                    <h1 id="study-title">HTML Content & Structure</h1>
+                    <div id="study-content">
+                        <!-- Content Injected -->
+                    </div>
+                    <button class="btn-main" onclick="showChallenge()">Take Proficiency Test</button>
+                </div>
+
+                <!-- Challenge View -->
+                <div id="challenge-view" class="hidden">
+                    <span class="category-tag">Final Challenge</span>
+                    <h2 id="challenge-question">Question Text?</h2>
+                    <div id="challenge-code-display" class="code-example"></div>
+                    
+                    <div id="options-container" class="options-grid">
+                        <!-- Buttons Injected -->
+                    </div>
+
+                    <div id="editor-container" class="editor-box hidden">
+                        <textarea id="code-editor" spellcheck="false"></textarea>
+                        <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 8px;">Write the exact code to satisfy the requirement.</p>
+                        <button class="btn-main" onclick="checkCodeAnswer()">Validate Proficiency</button>
+                    </div>
+
+                    <div id="feedback" class="feedback"></div>
+                </div>
+            </div>
+
+            <!-- Completion Screen -->
+            <div id="victory-screen" class="hidden">
+                <h1>Roadmap Complete!</h1>
+                <p>You have traveled from HTML basics to Advanced System Architecture. You are now prepared to build modern, secure, full-stack applications.</p>
+                <button class="btn-main" onclick="resetGame()">Start Over</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const curriculum = [
+            {
+                title: "HTML Foundation",
+                difficulty: "Beginner",
+                study: `
+                    <p>HTML (HyperText Markup Language) defines the <b>Structure</b> of your page. Think of it as the skeleton.</p>
+                    <h3>Common Tags:</h3>
+                    <ul>
+                        <li><code>&lt;h1&gt;</code> to <code>&lt;h6&gt;</code>: Headings</li>
+                        <li><code>&lt;p&gt;</code>: Paragraphs</li>
+                        <li><code>&lt;a href="..."&gt;</code>: Hyperlinks</li>
+                        <li><code>&lt;img src="..."&gt;</code>: Images</li>
+                    </ul>
+                    <div class="code-example">&lt;a href="https://google.com"&gt;Visit Google&lt;/a&gt;</div>
+                `,
+                type: "choice",
+                question: "Which tag is used to create a clickable link?",
+                options: ["<link>", "<a>", "<href>", "<url>"],
+                answer: 1
+            },
+            {
+                title: "CSS Presentation",
+                difficulty: "Beginner",
+                study: `
+                    <p>CSS controls the <b>Presentation</b>. Colors, fonts, and layouts.</p>
+                    <h3>The Box Model:</h3>
+                    <p>Every element is a box. It consists of: <b>Content</b>, <b>Padding</b> (inside space), <b>Border</b>, and <b>Margin</b> (outside space).</p>
+                    <div class="code-example">.box {
+  margin: 20px;
+  padding: 10px;
+  border: 1px solid black;
+}</div>
+                `,
+                type: "code",
+                question: "Write the CSS selector to make all <p> tags have the color 'blue'.",
+                check: (input) => input.replace(/\s/g, '').toLowerCase().includes("p{color:blue;}")
+            },
+            {
+                title: "JS Fundamentals",
+                difficulty: "Beginner",
+                study: `
+                    <p>JavaScript adds <b>Logic</b>. Variables store data, functions perform actions.</p>
+                    <h3>Data Types:</h3>
+                    <ul>
+                        <li><b>String:</b> "Hello"</li>
+                        <li><b>Number:</b> 42</li>
+                        <li><b>Boolean:</b> true/false</li>
+                    </ul>
+                    <div class="code-example">let score = 10;
+function addPoint() {
+  score = score + 1;
+}</div>
+                `,
+                type: "choice",
+                question: "What is the correct syntax for a variable that cannot be reassigned?",
+                options: ["var x = 1;", "let x = 1;", "const x = 1;", "static x = 1;"],
+                answer: 2
+            },
+            {
+                title: "DOM Manipulation",
+                difficulty: "Intermediate",
+                study: `
+                    <p>The DOM (Document Object Model) is how JS talks to HTML.</p>
+                    <div class="code-example">const btn = document.querySelector('#myBtn');
+btn.addEventListener('click', () => {
+  alert('Clicked!');
+});</div>
+                `,
+                type: "code",
+                question: "Use JS to change the text of an element with ID 'title' to 'Hello'.",
+                check: (input) => input.includes("document.getElementById('title')") || input.includes('querySelector("#title")') && input.includes(".innerText")
+            },
+            {
+                title: "Async & Promises",
+                difficulty: "Intermediate",
+                study: `
+                    <p>Web apps often wait for data. We use <b>Fetch</b> and <b>Async/Await</b> to handle this without freezing the screen.</p>
+                    <div class="code-example">async function getData() {
+  const response = await fetch(url);
+  const data = await response.json();
+}</div>
+                `,
+                type: "choice",
+                question: "Which Promise method is used to catch errors in a fetch request?",
+                options: [".then()", ".finally()", ".catch()", ".error()"],
+                answer: 2
+            },
+            {
+                title: "Terminal & Git",
+                difficulty: "Intermediate",
+                study: `
+                    <p>Git is <b>Version Control</b>. It tracks history like 'Google Docs for code'.</p>
+                    <ul>
+                        <li><code>git init</code>: Start a repo</li>
+                        <li><code>git add .</code>: Stage changes</li>
+                        <li><code>git commit -m "msg"</code>: Save snapshot</li>
+                    </ul>
+                `,
+                type: "choice",
+                question: "What command is used to upload your local commits to a server like GitHub?",
+                options: ["git pull", "git upload", "git push", "git commit"],
+                answer: 2
+            },
+            {
+                title: "Node.js Backend",
+                difficulty: "Advanced",
+                study: `
+                    <p>Node.js lets you run JavaScript on the <b>Server</b> instead of the browser.</p>
+                    <p>We use <b>NPM</b> (Node Package Manager) to install tools other people built.</p>
+                    <div class="code-example">const express = require('express');
+const app = express();
+app.listen(3000);</div>
+                `,
+                type: "choice",
+                question: "Which Node.js tool is used to manage and install external libraries?",
+                options: ["URL", "DOM", "NPM", "CSS"],
+                answer: 2
+            },
+            {
+                title: "Databases (SQL vs NoSQL)",
+                difficulty: "Advanced",
+                study: `
+                    <p><b>SQL (Relational):</b> Tables and rows (PostgreSQL/MySQL). Good for complex data relations.</p>
+                    <p><b>NoSQL:</b> Documents (MongoDB). Flexible and fast for simple data.</p>
+                `,
+                type: "choice",
+                question: "Which database type stores data in 'documents' that look like JSON objects?",
+                options: ["PostgreSQL", "MySQL", "MongoDB", "Oracle"],
+                answer: 2
+            },
+            {
+                title: "React & Frameworks",
+                difficulty: "Advanced",
+                study: `
+                    <p>React is a library for building <b>Components</b>. It uses 'State' to keep the UI in sync with data automatically.</p>
+                    <div class="code-example">function Welcome() {
+  const [name, setName] = useState("Dev");
+  return &lt;h1&gt;Hello, {name}&lt;/h1&gt;;
+}</div>
+                `,
+                type: "code",
+                question: "Write the basic Hook used to manage state in a React component.",
+                check: (input) => input.toLowerCase().includes("usestate")
+            },
+            {
+                title: "Advanced SSR (Next.js)",
+                difficulty: "Advanced",
+                study: `
+                    <p><b>Server-Side Rendering (SSR)</b> creates the HTML on the server for better SEO and speed.</p>
+                    <p>Next.js is the industry leader for React-based SSR.</p>
+                `,
+                type: "choice",
+                question: "What is the primary benefit of Server-Side Rendering (SSR)?",
+                options: ["Smaller file size", "Better SEO", "Easier CSS", "No JavaScript needed"],
+                answer: 1
+            },
+            {
+                title: "Web Security",
+                difficulty: "Advanced",
+                study: `
+                    <p>Protecting your app is vital. Key threats:</p>
+                    <ul>
+                        <li><b>SQL Injection:</b> Malicious SQL in inputs.</li>
+                        <li><b>XSS:</b> Running bad JS in other people's browsers.</li>
+                    </ul>
+                    <p>Always <b>Sanitize</b> your inputs!</p>
+                `,
+                type: "choice",
+                question: "What does XSS stand for in web security?",
+                options: ["Extra Style Sheets", "Cross-Site Scripting", "XML System Security", "X-ray Site Scan"],
+                answer: 1
+            }
+        ];
+
+        let currentModuleIndex = 0;
+        let unlockedModule = parseInt(localStorage.getItem('devQuestProgress')) || 0;
+
+        function init() {
+            renderModuleList();
+            if (unlockedModule > 0) {
+                document.getElementById('welcome-screen').innerHTML = `
+                    <h1>Welcome Back, Dev</h1>
+                    <p>You have unlocked up to <b>${curriculum[unlockedModule].title}</b>.</p>
+                    <button class="btn-main" onclick="startModule(${unlockedModule})">Continue Journey</button>
+                `;
+            }
+        }
+
+        function renderModuleList() {
+            const list = document.getElementById('module-list');
+            list.innerHTML = '';
+            curriculum.forEach((mod, idx) => {
+                const item = document.createElement('div');
+                const isLocked = idx > unlockedModule;
+                item.className = `module-link ${isLocked ? 'locked' : ''} ${idx === currentModuleIndex ? 'active' : ''}`;
+                item.innerHTML = `
+                    <span>${idx + 1}. ${mod.title}</span>
+                    <span class="badge">${mod.difficulty}</span>
+                `;
+                if (!isLocked) item.onclick = () => startModule(idx);
+                list.appendChild(item);
+            });
+        }
+
+        function startModule(index) {
+            currentModuleIndex = index;
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('victory-screen').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            
+            showStudy();
+            renderModuleList();
+        }
+
+        function showStudy() {
+            const mod = curriculum[currentModuleIndex];
+            document.getElementById('study-view').classList.remove('hidden');
+            document.getElementById('challenge-view').classList.add('hidden');
+            
+            document.getElementById('study-title').innerText = mod.title;
+            document.getElementById('study-content').innerHTML = mod.study;
+            document.getElementById('current-difficulty').innerText = mod.difficulty.toUpperCase();
+            
+            updateProgress();
+        }
+
+        function showChallenge() {
+            const mod = curriculum[currentModuleIndex];
+            document.getElementById('study-view').classList.add('hidden');
+            document.getElementById('challenge-view').classList.remove('hidden');
+            document.getElementById('feedback').classList.remove('success', 'error');
+            document.getElementById('feedback').style.display = 'none';
+
+            document.getElementById('challenge-question').innerText = mod.question;
+            
+            if (mod.type === 'choice') {
+                document.getElementById('options-container').classList.remove('hidden');
+                document.getElementById('editor-container').classList.add('hidden');
+                document.getElementById('challenge-code-display').innerText = "// Multiple Choice Question";
+                renderOptions(mod.options);
+            } else {
+                document.getElementById('options-container').classList.add('hidden');
+                document.getElementById('editor-container').classList.remove('hidden');
+                document.getElementById('challenge-code-display').innerText = "// Practical Code Proficiency";
+                document.getElementById('code-editor').value = '';
+            }
+        }
+
+        function renderOptions(options) {
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkChoice(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkChoice(index) {
+            if (index === curriculum[currentModuleIndex].answer) {
+                handleCorrect();
+            } else {
+                handleWrong();
+            }
+        }
+
+        function checkCodeAnswer() {
+            const val = document.getElementById('code-editor').value;
+            if (curriculum[currentModuleIndex].check(val)) {
+                handleCorrect();
+            } else {
+                handleWrong("Code syntax incorrect. Look at the study example again.");
+            }
+        }
+
+        function handleCorrect() {
+            const feedback = document.getElementById('feedback');
+            feedback.innerText = "Proficiency Verified. Unlocking next module...";
+            feedback.className = "feedback success";
+            
+            if (currentModuleIndex === unlockedModule) {
+                unlockedModule++;
+                localStorage.setItem('devQuestProgress', unlockedModule);
+            }
+
+            setTimeout(() => {
+                if (currentModuleIndex < curriculum.length - 1) {
+                    startModule(currentModuleIndex + 1);
+                } else {
+                    showVictory();
+                }
+            }, 2000);
+        }
+
+        function handleWrong(msg = "Incorrect answer. Re-read the study section!") {
+            const feedback = document.getElementById('feedback');
+            feedback.innerText = msg;
+            feedback.className = "feedback error";
+        }
+
+        function updateProgress() {
+            const percent = ((currentModuleIndex) / curriculum.length) * 100;
+            document.getElementById('progress-bar').style.width = percent + "%";
+            document.getElementById('progress-text').innerText = `Module ${currentModuleIndex + 1} of ${curriculum.length}`;
+        }
+
+        function showVictory() {
+            document.getElementById('game-area').classList.add('hidden');
+            document.getElementById('victory-screen').classList.remove('hidden');
+        }
+
+        function resetGame() {
+            if (confirm("Reset all learning progress?")) {
+                localStorage.removeItem('devQuestProgress');
+                location.reload();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
