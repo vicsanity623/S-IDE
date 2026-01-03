@@ -158,7 +158,7 @@
 <body>
 
     <nav>
-        <div class="logo">DEVQUEST ACADEMY <span class="version">v1.0</span></div>
+        <div class="logo">DEVQUEST ACADEMY <span class="version">v1.1</span></div>
         <div id="nav-controls" class="hidden">
             <button class="secondary-btn" onclick="showMainMenu()" style="padding: 8px 16px; font-size: 0.8rem;">Main Menu</button>
         </div>
@@ -239,6 +239,7 @@
                     <div class="editor-window">
                         <div class="editor-label">HTML Structure</div>
                         <div class="coding-helper-bar">
+                            <button class="helper-btn" onclick="performUndo('s-html')" style="color: #f87171;">UNDO</button>
                             <button class="helper-btn" onclick="insertStudio('s-html', '  ')">TAB</button>
                             <button class="helper-btn" onclick="insertStudio('s-html', '<')">&lt;</button>
                             <button class="helper-btn" onclick="insertStudio('s-html', '>')">&gt;</button>
@@ -250,6 +251,7 @@
                     <div class="editor-window">
                         <div class="editor-label">CSS Presentation</div>
                         <div class="coding-helper-bar">
+                            <button class="helper-btn" onclick="performUndo('s-css')" style="color: #f87171;">UNDO</button>
                             <button class="helper-btn" onclick="insertStudio('s-css', '  ')">TAB</button>
                             <button class="helper-btn" onclick="insertStudio('s-css', '{')">{</button>
                             <button class="helper-btn" onclick="insertStudio('s-css', '}')">}</button>
@@ -261,6 +263,7 @@
                     <div class="editor-window">
                         <div class="editor-label">JavaScript Logic</div>
                         <div class="coding-helper-bar">
+                            <button class="helper-btn" onclick="performUndo('s-js')" style="color: #f87171;">UNDO</button>
                             <button class="helper-btn" onclick="insertStudio('s-js', '  ')">TAB</button>
                             <button class="helper-btn" onclick="insertStudio('s-js', '(')">(</button>
                             <button class="helper-btn" onclick="insertStudio('s-js', ')')">)</button>
@@ -1199,8 +1202,40 @@ export default function Page({ data }) {
             iframe.srcdoc = combinedCode;
         }
 
-        /* HELPER FUNCTION FOR MOBILE INJECTION */
+        /* HISTORY & HELPER FUNCTIONS */
+        // 1. Initialize History Storage
+        const editorHistory = {
+            's-html': [],
+            's-css': [],
+            's-js': []
+        };
+
+        // 2. Function to Save State (Limit 20)
+        function saveState(id) {
+            const el = document.getElementById(id);
+            const stack = editorHistory[id];
+            
+            // Don't save if it's the exact same as the last saved state
+            if (stack.length > 0 && stack[stack.length - 1] === el.value) return;
+
+            stack.push(el.value);
+            // If history exceeds 20, remove the oldest one
+            if (stack.length > 20) stack.shift(); 
+        }
+
+        // 3. Function to Perform Undo
+        function performUndo(id) {
+            const stack = editorHistory[id];
+            if (stack.length === 0) return; // Nothing to undo
+            
+            const previousValue = stack.pop();
+            document.getElementById(id).value = previousValue;
+        }
+
+        // 4. Updated Insert Function (Saves state before inserting)
         function insertStudio(id, text) {
+            saveState(id); // Save checkpoint before modification
+            
             const el = document.getElementById(id);
             const start = el.selectionStart;
             const end = el.selectionEnd;
@@ -1209,6 +1244,22 @@ export default function Page({ data }) {
             el.selectionStart = el.selectionEnd = start + text.length;
             el.focus();
         }
+
+        // 5. Auto-Save Listeners for Manual Typing
+        // We attach listeners to save history when user hits Space, Enter, or Backspace
+        setTimeout(() => {
+            ['s-html', 's-css', 's-js'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('keydown', (e) => {
+                        // Create a history checkpoint on major key presses
+                        if (e.key === ' ' || e.key === 'Enter' || e.key === 'Backspace') {
+                            saveState(id);
+                        }
+                    });
+                }
+            });
+        }, 500); // Small delay to ensure elements exist
 
         window.addEventListener('message', (e) => {
             const output = document.getElementById('console-output');
