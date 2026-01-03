@@ -89,7 +89,7 @@
 
         .content-body { background: var(--card); border-radius: 24px; padding: 40px; border: 1px solid var(--border); line-height: 1.7; }
         .content-body h1 { color: var(--secondary); border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .example-box { background: #000; border-radius: 12px; padding: 20px; font-family: 'Fira Code', monospace; margin: 20px 0; border-left: 4px solid var(--primary); }
+        .example-box { background: #000; border-radius: 12px; padding: 20px; font-family: 'Fira Code', monospace; margin: 20px 0; border-left: 4px solid var(--primary); white-space: pre-wrap; word-wrap: break-word; }
 
         /* Game UI */
         .game-panel { max-width: 800px; margin: 0 auto; background: var(--card); border-radius: 30px; padding: 50px; border: 1px solid var(--border); }
@@ -283,7 +283,7 @@
     </div>
 
     <script>
-        // Data Structure
+        // Data Structure - EXPANDED CONTENT
         const academyData = [
             {
                 id: "html",
@@ -291,25 +291,59 @@
                 difficulty: "Beginner",
                 explanation: `
                     <h1>1. HTML: The Global Structure</h1>
-                    <p>HTML is a <b>Markup Language</b>. It uses "Tags" to tell the browser what a piece of content is (a heading, a button, a list).</p>
+                    <p>HTML (HyperText Markup Language) is the skeleton of every website. It defines what content exists on the page, distinguishing between headings, paragraphs, images, and interactive elements.</p>
                     
-                    <h3>10 Essential Concepts:</h3>
-                    <ul>
-                        <li><b>The Anatomy:</b> A tag usually looks like this: <code>&lt;tag&gt;Content&lt;/tag&gt;</code>.</li>
-                        <li><b>Headings:</b> <code>&lt;h1&gt;</code> is the most important title. <code>&lt;h2&gt;</code> through <code>&lt;h6&gt;</code> are sub-titles.</li>
-                        <li><b>Paragraphs:</b> Use <code>&lt;p&gt;</code> for any standard block of text.</li>
-                        <li><b>Links:</b> Use <code>&lt;a href="URL"&gt;</code>. The 'href' (Hypertext Reference) is the destination.</li>
-                        <li><b>Images:</b> Use <code>&lt;img src="path"&gt;</code>. Note: This tag is "self-closing" (no ending tag).</li>
-                        <li><b>Lists (Unordered):</b> <code>&lt;ul&gt;</code> creates bullet points; <code>&lt;li&gt;</code> defines items inside.</li>
-                        <li><b>Lists (Ordered):</b> <code>&lt;ol&gt;</code> creates numbered lists.</li>
-                        <li><b>Buttons:</b> <code>&lt;button&gt;</code> creates a clickable element.</li>
-                        <li><b>Divisions:</b> <code>&lt;div&gt;</code> is an invisible box used to group other elements together.</li>
-                        <li><b>Attributes:</b> Extra info inside a tag, like <code>class="name"</code> or <code>id="unique"</code>.</li>
-                    </ul>
-        
+                    <h3>A. The Basic Structure</h3>
+                    <p>Every HTML document requires a specific boilerplate to function correctly in browsers.</p>
                     <div class="example-box">
-                        &lt;!-- Example of a proper link --&gt;<br>
-                        &lt;a href="https://google.com"&gt;Go to Google&lt;/a&gt;
+&lt;!DOCTYPE html&gt;          &lt;!-- Tells browser this is HTML5 --&gt;
+&lt;html lang="en"&gt;           &lt;!-- Root element --&gt;
+  &lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;  &lt;!-- Character encoding --&gt;
+    &lt;title&gt;Page Title&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;!-- Visible content goes here --&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+                    </div>
+
+                    <h3>B. Core Elements & Semantics</h3>
+                    <p>Semantic HTML means using tags that describe their meaning (e.g., using <code>&lt;header&gt;</code> instead of just <code>&lt;div&gt;</code>). This helps SEO and accessibility.</p>
+                    <ul>
+                        <li><b>Headings:</b> <code>&lt;h1&gt;</code> (Main topic) to <code>&lt;h6&gt;</code> (Least important).</li>
+                        <li><b>Containers:</b> <code>&lt;div&gt;</code> (Generic block), <code>&lt;span&gt;</code> (Generic inline), <code>&lt;section&gt;</code>, <code>&lt;article&gt;</code>.</li>
+                        <li><b>Text:</b> <code>&lt;p&gt;</code> (Paragraph), <code>&lt;strong&gt;</code> (Bold), <code>&lt;em&gt;</code> (Italic).</li>
+                    </ul>
+
+                    <h3>C. Forms and Inputs</h3>
+                    <p>Forms are how websites collect user data.</p>
+                    <div class="example-box">
+&lt;form action="/submit"&gt;
+  &lt;label for="username"&gt;Username:&lt;/label&gt;
+  &lt;input type="text" id="username" placeholder="Enter name" /&gt;
+  
+  &lt;label for="pass"&gt;Password:&lt;/label&gt;
+  &lt;input type="password" id="pass" /&gt;
+  
+  &lt;button type="submit"&gt;Login&lt;/button&gt;
+&lt;/form&gt;
+                    </div>
+
+                    <h3>D. Lists and Tables</h3>
+                    <p>Organizing data visually.</p>
+                    <div class="example-box">
+&lt;!-- Unordered List (Bullets) --&gt;
+&lt;ul&gt;
+  &lt;li&gt;Item One&lt;/li&gt;
+  &lt;li&gt;Item Two&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;!-- Ordered List (Numbers) --&gt;
+&lt;ol&gt;
+  &lt;li&gt;First Step&lt;/li&gt;
+  &lt;li&gt;Second Step&lt;/li&gt;
+&lt;/ol&gt;
                     </div>
                 `,
                 question: "Which tag is used specifically for the main, most important heading of a page?",
@@ -323,31 +357,64 @@
                 difficulty: "Beginner",
                 explanation: `
                     <h1>2. CSS: The Visual Grammar</h1>
-                    <p>CSS is all about targeting an HTML element and applying a visual rule to it.</p>
+                    <p>CSS (Cascading Style Sheets) controls the look and feel of the HTML. It handles colors, layout, fonts, and responsiveness.</p>
                     
-                    <h3>The Rule Formula:</h3>
+                    <h3>A. Selectors and Specificity</h3>
+                    <p>We target HTML elements using selectors. Specificity determines which rule wins if two rules conflict.</p>
                     <div class="example-box">
-                        selector { <br>
-                        &nbsp;&nbsp;property: value;<br>
-                        }
+/* Target by Tag Name */
+p { color: grey; }
+
+/* Target by Class (Reusable) - distinct with (.) */
+.btn { background: blue; color: white; }
+
+/* Target by ID (Unique) - distinct with (#) */
+#header { height: 50px; }
+
+/* Target items inside other items */
+.card h2 { font-size: 20px; }
                     </div>
         
-                    <h3>10 Essential Concepts:</h3>
+                    <h3>B. The Box Model</h3>
+                    <p>Every element in HTML is a box. Understanding this is crucial for layout.</p>
                     <ul>
-                        <li><b>Selectors:</b> The name of the HTML tag you want to style (e.g., <code>p</code>, <code>h1</code>, <code>button</code>).</li>
-                        <li><b>Declaration Block:</b> Everything inside the <code>{ }</code> curly braces.</li>
-                        <li><b>Properties:</b> The specific attribute you want to change (e.g., <code>color</code>, <code>font-size</code>).</li>
-                        <li><b>Values:</b> The setting you apply (e.g., <code>red</code>, <code>20px</code>).</li>
-                        <li><b>The Semicolon:</b> Every line inside the braces <b>must</b> end with a <code>;</code> or the code breaks.</li>
-                        <li><b>Colors:</b> Use <code>color: blue;</code> for text and <code>background-color: black;</code> for boxes.</li>
-                        <li><b>Font Size:</b> Controlled by <code>font-size: 16px;</code>.</li>
-                        <li><b>Margin:</b> Space <b>outside</b> the element's border.</li>
-                        <li><b>Padding:</b> Space <b>inside</b> the element, between content and border.</li>
-                        <li><b>Border:</b> The physical line around the box: <code>border: 1px solid black;</code>.</li>
+                        <li><b>Content:</b> The actual text or image.</li>
+                        <li><b>Padding:</b> Space <i>inside</i> the border (pushes content inward).</li>
+                        <li><b>Border:</b> The line around the edge.</li>
+                        <li><b>Margin:</b> Space <i>outside</i> the border (pushes other elements away).</li>
                     </ul>
-        
-                    <h3>How-To (The "Color" Rule):</h3>
-                    <p>To turn paragraphs red, the selector is <b>p</b>, the property is <b>color</b>, and the value is <b>red</b>.</p>
+                    <div class="example-box">
+.box {
+  width: 200px;
+  padding: 20px; /* Space inside */
+  border: 1px solid black;
+  margin: 20px;  /* Space outside */
+}
+                    </div>
+
+                    <h3>C. Modern Layouts: Flexbox</h3>
+                    <p>Flexbox is the best way to align items in a row or column.</p>
+                    <div class="example-box">
+.container {
+  display: flex;
+  justify-content: center; /* Horizontally center */
+  align-items: center;     /* Vertically center */
+  gap: 10px;               /* Space between items */
+}
+                    </div>
+
+                    <h3>D. Responsive Design</h3>
+                    <p>Using "Media Queries" to change styles for mobile phones.</p>
+                    <div class="example-box">
+/* Default (Desktop) */
+body { font-size: 18px; }
+
+/* Mobile devices (Max width 600px) */
+@media (max-width: 600px) {
+  body { font-size: 14px; }
+  .container { flex-direction: column; }
+}
+                    </div>
                 `,
                 question: "Write the CSS selector that would change the color of all <p> tags to 'red'.",
                 type: "code",
@@ -359,25 +426,50 @@
                 difficulty: "Beginner",
                 explanation: `
                     <h1>3. JavaScript: The Action</h1>
-                    <p>JavaScript is the programming language that lets your website "think."</p>
+                    <p>JavaScript (JS) makes websites interactive. It can calculate math, validate forms, and animate elements.</p>
         
-                    <h3>10 Essential Concepts:</h3>
-                    <ul>
-                        <li><b>Variables (let):</b> A box for data that <b>can</b> change later.</li>
-                        <li><b>Variables (const):</b> Short for "Constant." A box for data that <b>never</b> changes.</li>
-                        <li><b>Strings:</b> Text data wrapped in quotes: <code>"Hello World"</code>.</li>
-                        <li><b>Numbers:</b> Math data (no quotes): <code>42</code>.</li>
-                        <li><b>Booleans:</b> Simple <code>true</code> or <code>false</code> values.</li>
-                        <li><b>Functions:</b> A saved "recipe" of code: <code>function name() { ... }</code>.</li>
-                        <li><b>Calling a Function:</b> To run the recipe, use: <code>name();</code>.</li>
-                        <li><b>Alerts:</b> A popup box: <code>alert("Hi!");</code>.</li>
-                        <li><b>Console Log:</b> Sending messages to the developer tool: <code>console.log("Debug");</code>.</li>
-                        <li><b>Comments:</b> Use <code>//</code> to write notes the computer ignores.</li>
-                    </ul>
-        
+                    <h3>A. Variables and Data Types</h3>
+                    <p>Containers for storing data.</p>
                     <div class="example-box">
-                        const price = 100; // This value is locked<br>
-                        let score = 0; // This value can be updated
+let username = "DevQuest"; // String
+const age = 25;            // Number (Cannot change)
+let isOnline = true;       // Boolean
+let skills = ["HTML", "CSS", "JS"]; // Array
+let user = { name: "Alex", id: 1 }; // Object
+                    </div>
+
+                    <h3>B. Conditionals (Logic)</h3>
+                    <p>Making decisions in code using if/else statements.</p>
+                    <div class="example-box">
+if (age >= 18) {
+  console.log("Adult access granted");
+} else {
+  console.log("Access denied");
+}
+                    </div>
+
+                    <h3>C. Loops</h3>
+                    <p>Repeating actions automatically.</p>
+                    <div class="example-box">
+// For Loop: Run 5 times
+for (let i = 0; i < 5; i++) {
+  console.log("Count: " + i);
+}
+
+// Array Loop
+skills.forEach(skill => {
+  console.log("I know: " + skill);
+});
+                    </div>
+
+                    <h3>D. Functions</h3>
+                    <p>Reusable blocks of code.</p>
+                    <div class="example-box">
+function add(a, b) {
+  return a + b;
+}
+
+let result = add(5, 10); // result is 15
                     </div>
                 `,
                 question: "What keyword is used to declare a variable that is constant and cannot be changed later?",
@@ -391,59 +483,565 @@
                 difficulty: "Intermediate",
                 explanation: `
                     <h1>4. The DOM: The Bridge</h1>
-                    <p>The DOM (Document Object Model) is how your JavaScript finds and edits your HTML.</p>
+                    <p>The Document Object Model (DOM) is an object representation of the HTML. JS uses it to modify the page in real-time.</p>
         
-                    <h3>10 Essential Concepts:</h3>
-                    <ul>
-                        <li><b>Selecting by ID:</b> <code>document.getElementById('id-name')</code> finds one specific thing.</li>
-                        <li><b>Query Selector:</b> <code>document.querySelector('.class')</code> finds things using CSS style names.</li>
-                        <li><b>Changing Text:</b> Use <code>.innerText = "New Text"</code> to swap words.</li>
-                        <li><b>Changing Style:</b> Use <code>.style.color = "blue"</code> to change CSS via JS.</li>
-                        <li><b>Event Listeners:</b> Waiting for a user to do something: <code>.addEventListener('click', ...)</code>.</li>
-                        <li><b>Click Events:</b> The most common event for buttons.</li>
-                        <li><b>Input Values:</b> Getting what a user typed: <code>element.value</code>.</li>
-                        <li><b>Classes:</b> Adding a CSS class via JS: <code>.classList.add('hidden')</code>.</li>
-                        <li><b>Creating Elements:</b> Making new HTML on the fly: <code>document.createElement('div')</code>.</li>
-                        <li><b>Appending:</b> Putting a new element into the page: <code>document.body.appendChild(el)</code>.</li>
-                    </ul>
-        
-                    <h3>How-To: Finding an element</h3>
-                    <p>If your HTML is <code>&lt;button id="submit"&gt;</code>, your JS finds it using the <b>ID</b> inside quotes.</p>
+                    <h3>A. Selecting Elements</h3>
+                    <div class="example-box">
+// Old way
+const btn = document.getElementById('myBtn');
+
+// Modern way (Selects CSS classes, IDs, or tags)
+const title = document.querySelector('.main-title');
+const allItems = document.querySelectorAll('li');
+                    </div>
+
+                    <h3>B. Modifying Content and Styles</h3>
+                    <div class="example-box">
+const box = document.querySelector('.box');
+
+// Change text
+box.innerText = "Updated Content!";
+
+// Change HTML inside
+box.innerHTML = "<b>Bold Text</b>";
+
+// Change CSS
+box.style.backgroundColor = "blue";
+box.classList.add("active"); // Adds a CSS class
+                    </div>
+
+                    <h3>C. Event Listeners</h3>
+                    <p>Waiting for user interaction (clicks, typing, scrolling).</p>
+                    <div class="example-box">
+const btn = document.querySelector('button');
+
+btn.addEventListener('click', function() {
+  alert("Button was clicked!");
+});
+                    </div>
+
+                    <h3>D. Creating Elements</h3>
+                    <p>Adding new HTML via JavaScript.</p>
+                    <div class="example-box">
+// 1. Create
+const newDiv = document.createElement('div');
+newDiv.innerText = "I am new here";
+
+// 2. Append to body
+document.body.appendChild(newDiv);
+                    </div>
                 `,
                 question: "Write the JavaScript command to find an element with the ID 'btn'.",
                 type: "code",
                 check: (val) => val.includes("document.getElementById('btn')") || val.includes("document.querySelector('#btn')")
             },
             {
+                id: "jsdeep",
+                title: "JS Deep Dive",
+                difficulty: "Advanced",
+                explanation: `
+                    <h1>5. JavaScript Deep Dive</h1>
+                    <p>Moving beyond basics to understand how JS actually works under the hood.</p>
+
+                    <h3>A. Scope (Global vs Block)</h3>
+                    <p>Scope determines where variables are visible.</p>
+                    <div class="example-box">
+let globalVar = "I am everywhere";
+
+if (true) {
+  let blockVar = "I only exist here";
+  console.log(globalVar); // Works
+}
+// console.log(blockVar); // Error: blockVar is not defined
+                    </div>
+
+                    <h3>B. Arrow Functions</h3>
+                    <p>A shorter syntax for functions introduced in ES6.</p>
+                    <div class="example-box">
+// Traditional
+function sum(a, b) { return a + b; }
+
+// Arrow Function
+const sum = (a, b) => a + b;
+                    </div>
+
+                    <h3>C. Destructuring</h3>
+                    <p>Extracting data from arrays or objects easily.</p>
+                    <div class="example-box">
+const user = { name: "John", age: 30 };
+
+// Extracting 'name' into a variable
+const { name, age } = user; 
+console.log(name); // "John"
+                    </div>
+
+                    <h3>D. Template Literals</h3>
+                    <p>Embedding variables in strings using backticks.</p>
+                    <div class="example-box">
+const item = "Apple";
+const price = 2;
+console.log(\`The price of \${item} is $\${price}\`);
+                    </div>
+                `,
+                question: "What symbol is used for Template Literals in JavaScript?",
+                type: "choice",
+                options: ["' (Single Quote)", "\" (Double Quote)", "` (Backtick)", ". (Dot)"],
+                answer: 2
+            },
+            {
+                id: "fetch",
+                title: "Fetch & Promises (APIs)",
+                difficulty: "Advanced",
+                explanation: `
+                    <h1>6. Fetch, Promises & Complex APIs</h1>
+                    <p>Modern apps don't store all data locally; they fetch it from servers. This process is asynchronous (it takes time).</p>
+
+                    <h3>A. Promises</h3>
+                    <p>A Promise represents a value that doesn't exist yet but will in the future.</p>
+                    <div class="example-box">
+const myPromise = new Promise((resolve, reject) => {
+  let success = true;
+  if(success) resolve("Data Loaded");
+  else reject("Error");
+});
+
+myPromise.then(data => console.log(data));
+                    </div>
+
+                    <h3>B. The Fetch API</h3>
+                    <p>Getting data from a URL.</p>
+                    <div class="example-box">
+fetch('https://api.example.com/users')
+  .then(response => response.json()) // Convert text to JSON
+  .then(data => console.log(data))   // Use data
+  .catch(error => console.error(error));
+                    </div>
+
+                    <h3>C. Async / Await</h3>
+                    <p>Syntactic sugar to make asynchronous code look synchronous (easier to read).</p>
+                    <div class="example-box">
+async function getData() {
+  try {
+    const response = await fetch('https://api.example.com/data');
+    const data = await response.json();
+    console.log(data);
+  } catch (err) {
+    console.log("Failed to fetch", err);
+  }
+}
+                    </div>
+                `,
+                question: "Which keyword waits for a Promise to resolve inside an async function?",
+                type: "choice",
+                options: ["wait", "await", "then", "stop"],
+                answer: 1
+            },
+            {
                 id: "git",
-                title: "Version Control (Git)",
+                title: "Terminal & Git",
                 difficulty: "Intermediate",
                 explanation: `
-                    <h1>5. Git: The Save System</h1>
-                    <p>Git tracks changes in your project files so you can undo mistakes or collaborate with others.</p>
+                    <h1>7. Terminal & Git Version Control</h1>
+                    <p>Professional developers use the Command Line Interface (CLI) and Git to manage code history and collaboration.</p>
         
-                    <h3>10 Essential Concepts:</h3>
+                    <h3>A. Essential Terminal Commands</h3>
                     <ul>
-                        <li><b>Repository (Repo):</b> The "Project Folder" that Git is watching.</li>
-                        <li><b>Init:</b> <code>git init</code> starts Git inside a new folder.</li>
-                        <li><b>The Stage:</b> A middle-ground where you pick which files to save.</li>
-                        <li><b>Add:</b> <code>git add .</code> puts all your changes onto the "Stage."</li>
-                        <li><b>Commit:</b> <code>git commit -m "msg"</code> permanently saves the staged changes.</li>
-                        <li><b>The Message:</b> Every commit needs a <code>-m</code> message explaining the change.</li>
-                        <li><b>Push:</b> Sending your local saves up to GitHub (the cloud).</li>
-                        <li><b>Pull:</b> Downloading the latest changes from the cloud to your computer.</li>
-                        <li><b>Status:</b> <code>git status</code> tells you what has changed since the last save.</li>
-                        <li><b>Log:</b> <code>git log</code> shows you a history of all your past "Commits."</li>
+                        <li><code>ls</code> (or <code>dir</code> on Windows): List files in current folder.</li>
+                        <li><code>cd foldername</code>: Change Directory (open a folder).</li>
+                        <li><code>cd ..</code>: Go back up one folder level.</li>
+                        <li><code>mkdir name</code>: Make Directory (create new folder).</li>
+                        <li><code>touch file.js</code>: Create a new file.</li>
                     </ul>
-        
+
+                    <h3>B. Git Workflow</h3>
+                    <p>Git creates "save points" for your project.</p>
                     <div class="example-box">
-                        Step 1: git add . <br>
-                        Step 2: git commit -m "Fixed the header"
+# 1. Initialize Git in a folder
+git init
+
+# 2. Check what files changed
+git status
+
+# 3. Stage changes (Prepare to save)
+git add . 
+
+# 4. Commit changes (Save with message)
+git commit -m "Added login feature"
+
+# 5. Connect to Cloud (GitHub)
+git remote add origin https://github.com/user/repo.git
+
+# 6. Upload
+git push -u origin main
+                    </div>
+
+                    <h3>C. Branching</h3>
+                    <p>Working on a feature without breaking the main code.</p>
+                    <div class="example-box">
+git checkout -b new-feature-branch
+# ... make changes ...
+git commit -m "Finished feature"
+git checkout main
+git merge new-feature-branch
                     </div>
                 `,
                 question: "Which command is used to permanently save your staged changes in the history?",
                 type: "choice",
                 options: ["git save", "git commit", "git push", "git init"],
+                answer: 1
+            },
+            {
+                id: "node",
+                title: "Node.js (Backend)",
+                difficulty: "Expert",
+                explanation: `
+                    <h1>8. Node.js</h1>
+                    <p>Node.js allows you to run JavaScript outside the browser (on the server). It is the backbone of the "MERN" stack.</p>
+
+                    <h3>A. Modules (CommonJS)</h3>
+                    <p>Splitting code into files.</p>
+                    <div class="example-box">
+// math.js
+function add(a, b) { return a + b; }
+module.exports = add;
+
+// app.js
+const add = require('./math');
+console.log(add(2, 2));
+                    </div>
+
+                    <h3>B. Creating a Basic Server</h3>
+                    <p>Handling HTTP requests without a framework.</p>
+                    <div class="example-box">
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  res.end('Hello from Node Server!');
+});
+
+server.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
+                    </div>
+
+                    <h3>C. NPM (Node Package Manager)</h3>
+                    <p>Installing tools others have written (like Express).</p>
+                    <div class="example-box">
+# Initialize project
+npm init -y
+
+# Install a package
+npm install express
+                    </div>
+                `,
+                question: "What command is used to include an external module in Node.js?",
+                type: "choice",
+                options: ["import", "include", "require", "fetch"],
+                answer: 2
+            },
+            {
+                id: "db",
+                title: "Databases (SQL & NoSQL)",
+                difficulty: "Expert",
+                explanation: `
+                    <h1>9. Databases</h1>
+                    <p>Where your application stores data permanently.</p>
+
+                    <h3>A. SQL (Relational) - e.g., PostgreSQL</h3>
+                    <p>Data is stored in strict Tables with rows and columns.</p>
+                    <div class="example-box">
+-- Create Table
+CREATE TABLE users (
+  id INT PRIMARY KEY,
+  name VARCHAR(50),
+  email VARCHAR(50)
+);
+
+-- Find Data
+SELECT * FROM users WHERE name = 'Alice';
+                    </div>
+
+                    <h3>B. NoSQL (Non-Relational) - e.g., MongoDB</h3>
+                    <p>Data is stored in flexible JSON-like documents. No strict schema required.</p>
+                    <div class="example-box">
+// MongoDB Document structure
+{
+  "_id": "507f1f77bcf86cd799439011",
+  "name": "Alice",
+  "email": "alice@example.com",
+  "hobbies": ["Coding", "Gaming"]
+}
+                    </div>
+
+                    <h3>C. Mongoose (Node + Mongo)</h3>
+                    <div class="example-box">
+// Defining a schema in Code
+const UserSchema = new mongoose.Schema({
+  name: String,
+  age: Number
+});
+const User = mongoose.model('User', UserSchema);
+                    </div>
+                `,
+                question: "Which type of database stores data in Tables, Rows, and Columns?",
+                type: "choice",
+                options: ["NoSQL", "SQL", "JSON", "Mongo"],
+                answer: 1
+            },
+            {
+                id: "ts",
+                title: "TypeScript",
+                difficulty: "Expert",
+                explanation: `
+                    <h1>10. TypeScript</h1>
+                    <p>TypeScript is JavaScript with "Types". It prevents bugs by ensuring you don't pass text into a math function.</p>
+
+                    <h3>A. Basic Types</h3>
+                    <div class="example-box">
+let score: number = 10;
+let username: string = "Dev";
+let isActive: boolean = true;
+let tags: string[] = ["general", "news"];
+                    </div>
+
+                    <h3>B. Interfaces</h3>
+                    <p>Defining the shape of an object.</p>
+                    <div class="example-box">
+interface User {
+  id: number;
+  name: string;
+  email?: string; // Optional field
+}
+
+const myUser: User = {
+  id: 1,
+  name: "Sarah"
+};
+                    </div>
+
+                    <h3>C. Function Types</h3>
+                    <p>Defining what goes in and what comes out.</p>
+                    <div class="example-box">
+function add(x: number, y: number): number {
+  return x + y;
+}
+                    </div>
+                `,
+                question: "In TypeScript, how do you define a variable 'count' that must be a number?",
+                type: "code",
+                check: (val) => val.includes("let count: number") || val.includes("const count: number") || val.includes("var count: number")
+            },
+            {
+                id: "react",
+                title: "React.js",
+                difficulty: "Expert",
+                explanation: `
+                    <h1>11. React.js</h1>
+                    <p>A library for building User Interfaces using "Components" - reusable chunks of UI.</p>
+
+                    <h3>A. Components (JSX)</h3>
+                    <p>Writing HTML inside JavaScript.</p>
+                    <div class="example-box">
+function WelcomeButton() {
+  return (
+    &lt;button className="btn"&gt;
+      Click Me
+    &lt;/button&gt;
+  );
+}
+                    </div>
+
+                    <h3>B. State (useState Hook)</h3>
+                    <p>How React remembers data.</p>
+                    <div class="example-box">
+import { useState } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;You clicked {count} times&lt;/p&gt;
+      &lt;button onClick={() => setCount(count + 1)}&gt;
+        Add
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+                    </div>
+
+                    <h3>C. Props</h3>
+                    <p>Passing data from parent to child.</p>
+                    <div class="example-box">
+function Greeting(props) {
+  return &lt;h1&gt;Hello, {props.name}&lt;/h1&gt;;
+}
+
+// Usage
+&lt;Greeting name="Alice" /&gt;
+                    </div>
+                `,
+                question: "Which Hook is used to store local state in a functional component?",
+                type: "choice",
+                options: ["useEffect", "useState", "useStore", "useData"],
+                answer: 1
+            },
+            {
+                id: "network",
+                title: "Networks & Internet",
+                difficulty: "Expert",
+                explanation: `
+                    <h1>12. Networks</h1>
+                    <p>Understanding how data travels across the web is vital for debugging.</p>
+
+                    <h3>A. HTTP Methods</h3>
+                    <ul>
+                        <li><b>GET:</b> Retrieve data (Loading a page).</li>
+                        <li><b>POST:</b> Send new data (Submitting a form).</li>
+                        <li><b>PUT:</b> Update existing data.</li>
+                        <li><b>DELETE:</b> Remove data.</li>
+                    </ul>
+
+                    <h3>B. Status Codes</h3>
+                    <ul>
+                        <li><b>200 OK:</b> Success.</li>
+                        <li><b>404 Not Found:</b> The resource doesn't exist.</li>
+                        <li><b>500 Server Error:</b> The backend crashed.</li>
+                        <li><b>403 Forbidden:</b> You don't have permission.</li>
+                    </ul>
+
+                    <h3>C. DNS (Domain Name System)</h3>
+                    <p>The "Phonebook" of the internet. It turns <code>google.com</code> into an IP address like <code>142.250.190.46</code>.</p>
+                `,
+                question: "Which HTTP method is typically used to retrieve data from a server?",
+                type: "choice",
+                options: ["POST", "DELETE", "GET", "PUT"],
+                answer: 2
+            },
+            {
+                id: "cloud",
+                title: "Cloud Computing",
+                difficulty: "Master",
+                explanation: `
+                    <h1>13. Cloud Computing</h1>
+                    <p>Using someone else's computers (AWS, Google, Azure) to run your app.</p>
+
+                    <h3>A. IaaS vs PaaS</h3>
+                    <ul>
+                        <li><b>IaaS (Infrastructure as a Service):</b> Renting raw virtual machines (e.g., AWS EC2). You manage the OS.</li>
+                        <li><b>PaaS (Platform as a Service):</b> You upload code, they handle the servers (e.g., Heroku, Vercel).</li>
+                    </ul>
+
+                    <h3>B. Serverless</h3>
+                    <p>Running code functions only when needed, without keeping a server running 24/7 (e.g., AWS Lambda).</p>
+
+                    <h3>C. Storage</h3>
+                    <p>Storing user uploads (images, videos) in "buckets" like AWS S3, separate from your database.</p>
+                `,
+                question: "Which service model involves renting raw virtual machines like AWS EC2?",
+                type: "choice",
+                options: ["SaaS", "PaaS", "IaaS", "Serverless"],
+                answer: 2
+            },
+            {
+                id: "infra",
+                title: "Infrastructure & CI/CD",
+                difficulty: "Master",
+                explanation: `
+                    <h1>14. Infrastructure & DevOps</h1>
+                    <p>Automating the deployment of code.</p>
+
+                    <h3>A. Docker (Containers)</h3>
+                    <p>Packaging your app with all its dependencies so it runs exactly the same on every machine.</p>
+                    <div class="example-box">
+# Dockerfile Example
+FROM node:14
+WORKDIR /app
+COPY package.json .
+RUN npm install
+COPY . .
+CMD ["node", "app.js"]
+                    </div>
+
+                    <h3>B. CI/CD (Continuous Integration/Deployment)</h3>
+                    <p>A pipeline that automatically tests your code and pushes it to the server when you commit.</p>
+                    <ul>
+                        <li><b>CI:</b> Running automated tests on every push.</li>
+                        <li><b>CD:</b> Deploying to production automatically if tests pass.</li>
+                    </ul>
+                `,
+                question: "What tool is primarily used for Containerization?",
+                type: "choice",
+                options: ["Git", "Docker", "React", "MongoDB"],
+                answer: 1
+            },
+            {
+                id: "security",
+                title: "Web Security",
+                difficulty: "Master",
+                explanation: `
+                    <h1>15. Security</h1>
+                    <p>Protecting users and data from hackers.</p>
+
+                    <h3>A. HTTPS / SSL</h3>
+                    <p>Encrypting the connection between browser and server so no one can intercept passwords.</p>
+
+                    <h3>B. Hashing Passwords</h3>
+                    <p>NEVER store passwords in plain text. Use hashing (e.g., Bcrypt).</p>
+                    <div class="example-box">
+// Good Practice (Node.js)
+const bcrypt = require('bcrypt');
+const hash = await bcrypt.hash(password, 10);
+// Store 'hash' in DB, not 'password'
+                    </div>
+
+                    <h3>C. Common Attacks (OWASP)</h3>
+                    <ul>
+                        <li><b>XSS (Cross-Site Scripting):</b> Injecting malicious JS into a page.</li>
+                        <li><b>SQL Injection:</b> Tricking the database into revealing data.</li>
+                        <li><b>CSRF:</b> Tricking a user into performing an action they didn't intend.</li>
+                    </ul>
+                `,
+                question: "What should you do before storing a user's password in a database?",
+                type: "choice",
+                options: ["Email it", "Hash it", "Compress it", "Print it"],
+                answer: 1
+            },
+            {
+                id: "ssr",
+                title: "SSR (Server Side Rendering)",
+                difficulty: "Master",
+                explanation: `
+                    <h1>16. SSR & Next.js</h1>
+                    <p>Advanced rendering techniques for performance and SEO.</p>
+
+                    <h3>A. CSR (Client Side Rendering)</h3>
+                    <p>Standard React. The browser downloads an empty HTML file and JS builds the page. Slow initial load, bad for SEO.</p>
+
+                    <h3>B. SSR (Server Side Rendering)</h3>
+                    <p>The server builds the HTML page completely <i>before</i> sending it to the browser. Fast and great for Google.</p>
+
+                    <h3>C. Next.js Example</h3>
+                    <p>A framework on top of React that handles SSR.</p>
+                    <div class="example-box">
+// Runs on Server before page loads
+export async function getServerSideProps() {
+  const res = await fetch('https://api.com/data');
+  const data = await res.json();
+
+  return { props: { data } };
+}
+
+export default function Page({ data }) {
+  return &lt;div&gt;Rendered on Server: {data.title}&lt;/div&gt;;
+}
+                    </div>
+                `,
+                question: "Which rendering method is generally better for SEO (Search Engine Optimization)?",
+                type: "choice",
+                options: ["Client Side Rendering (CSR)", "Server Side Rendering (SSR)", "FTP", "Local Rendering"],
                 answer: 1
             }
         ];
@@ -556,7 +1154,7 @@
                 if (currentLevel < academyData.length) {
                     loadLevel();
                 } else {
-                    alert("CONGRATULATIONS! You have completed the foundation path!");
+                    alert("CONGRATULATIONS! You have completed the entire roadmap!");
                     showMainMenu();
                     currentLevel = 0;
                 }
