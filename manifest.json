@@ -1,6 +1,6 @@
 {
-  "name": "Learn to code",
-  "short_name": "Learn",
+  "name": "DevQuest",
+  "short_name": "DevQuest",
   "start_url": "coding.html",
   "display": "standalone",
   "background_color": "#000000",
