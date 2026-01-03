@@ -1,4 +1,4 @@
-const GAME_VERSION = 'v5.5'; // Incremented version
+const GAME_VERSION = 'v5.6'; // Incremented version
 const CACHE_NAME = `AIC-${GAME_VERSION}`;
 
 // Added manifest.json to the assets list
