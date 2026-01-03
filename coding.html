@@ -108,6 +108,19 @@
         .feedback { padding: 15px; border-radius: 12px; margin-top: 20px; font-weight: 600; }
         .success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
         .error { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        /* WRITE CODE SECTION STYLES - NEW ADDITION */
+        .studio-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: calc(100vh - 180px); }
+        .editor-stack { display: flex; flex-direction: column; gap: 10px; }
+        .editor-window { flex: 1; display: flex; flex-direction: column; background: #0f172a; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        .editor-label { background: #1e293b; padding: 5px 15px; font-size: 0.7rem; font-weight: 800; color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        .studio-textarea { flex: 1; width: 100%; background: transparent; border: none; padding: 10px; color: #38bdf8; font-family: 'Fira Code', monospace; font-size: 0.85rem; margin: 0; }
+        .preview-window { display: flex; flex-direction: column; gap: 10px; }
+        #studio-iframe { flex: 2; width: 100%; background: white; border-radius: 12px; border: none; }
+        .studio-console { flex: 1; background: #000; border-radius: 12px; border: 1px solid var(--border); padding: 15px; font-family: 'Fira Code', monospace; overflow-y: auto; font-size: 0.8rem; }
+        .console-log { color: #e2e8f0; margin-bottom: 4px; }
+        .console-error { color: #f87171; margin-bottom: 4px; font-weight: 600; }
+        .console-tip { color: #fbbf24; font-style: italic; margin-top: 5px; border-top: 1px solid #333; padding-top: 5px; }
     </style>
 </head>
 <body>
@@ -135,6 +148,11 @@
                 <div class="menu-card" onclick="startGame()">
                     <h2>Game Path</h2>
                     <p>Test your proficiency and unlock levels from HTML to Advanced Security.</p>
+                </div>
+                <!-- NEW OPTION ADDED HERE -->
+                <div class="menu-card" onclick="openStudio()" style="border-color: var(--accent);">
+                    <h2 style="color: var(--accent);">Write Code</h2>
+                    <p>Free practice whiteboard. Write code, see results, and get smart error tips.</p>
                 </div>
             </div>
         </div>
@@ -175,6 +193,38 @@
                 
                 <div style="margin-top: 40px; text-align: center;">
                     <button class="secondary-btn" onclick="openLibrary()" style="font-size: 0.8rem;">Need to Study this topic?</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- WRITE CODE SECTION - NEW ADDITION -->
+        <div id="studio-section" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0; color:var(--accent);">DevStudio Whiteboard</h2>
+                <button class="primary-btn" onclick="runStudioCode()" style="background:var(--accent); padding:10px 25px;">▶ RUN & PREVIEW</button>
+            </div>
+            <div class="studio-layout">
+                <div class="editor-stack">
+                    <div class="editor-window">
+                        <div class="editor-label">HTML Structure</div>
+                        <textarea id="s-html" class="studio-textarea" spellcheck="false" placeholder="<!-- Write HTML here -->"><h1>Hello World</h1></textarea>
+                    </div>
+                    <div class="editor-window">
+                        <div class="editor-label">CSS Presentation</div>
+                        <textarea id="s-css" class="studio-textarea" spellcheck="false" placeholder="/* Write CSS here */">h1 { color: #8b5cf6; font-family: sans-serif; }</textarea>
+                    </div>
+                    <div class="editor-window">
+                        <div class="editor-label">JavaScript Logic</div>
+                        <textarea id="s-js" class="studio-textarea" spellcheck="false" placeholder="// Write JS here">console.log("Welcome to the Studio!");</textarea>
+                    </div>
+                </div>
+                <div class="preview-window">
+                    <div class="editor-label" style="background:#475569; border:none; border-radius:12px 12px 0 0;">Live Result</div>
+                    <iframe id="studio-iframe"></iframe>
+                    <div class="studio-console" id="s-console">
+                        <div style="color:var(--secondary); font-size:0.6rem; margin-bottom:10px; text-transform:uppercase;">Debug Console</div>
+                        <div id="console-output"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -352,12 +402,14 @@
             document.getElementById('main-menu').classList.remove('hidden');
             document.getElementById('library-section').classList.add('hidden');
             document.getElementById('game-section').classList.add('hidden');
+            document.getElementById('studio-section').classList.add('hidden'); // ADDED
             document.getElementById('nav-controls').classList.add('hidden');
         }
 
         function openLibrary(topicIndex = 0) {
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('game-section').classList.add('hidden');
+            document.getElementById('studio-section').classList.add('hidden'); // ADDED
             document.getElementById('library-section').classList.remove('hidden');
             document.getElementById('nav-controls').classList.remove('hidden');
             
@@ -384,6 +436,7 @@
         function startGame() {
             document.getElementById('main-menu').classList.add('hidden');
             document.getElementById('library-section').classList.add('hidden');
+            document.getElementById('studio-section').classList.add('hidden'); // ADDED
             document.getElementById('game-section').classList.remove('hidden');
             document.getElementById('nav-controls').classList.remove('hidden');
             loadLevel();
@@ -457,6 +510,72 @@
                 }
             }, 1500);
         }
+
+        /* STUDIO LOGIC - NEW ADDITION */
+        function openStudio() {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('game-section').classList.add('hidden');
+            document.getElementById('library-section').classList.add('hidden');
+            document.getElementById('studio-section').classList.remove('hidden');
+            document.getElementById('nav-controls').classList.remove('hidden');
+            runStudioCode();
+        }
+
+        function runStudioCode() {
+            const html = document.getElementById('s-html').value;
+            const css = document.getElementById('s-css').value;
+            const js = document.getElementById('s-js').value;
+            const iframe = document.getElementById('studio-iframe');
+            const output = document.getElementById('console-output');
+            
+            output.innerHTML = "";
+
+            const combinedCode = `
+                <html>
+                    <head><style>${css}</style></head>
+                    <body>
+                        ${html}
+                        <script>
+                            const originalLog = console.log;
+                            console.log = function(...args) {
+                                window.parent.postMessage({type: 'log', val: args.join(' ')}, '*');
+                                originalLog.apply(console, args);
+                            };
+                            window.onerror = function(msg) {
+                                window.parent.postMessage({type: 'error', val: msg}, '*');
+                            };
+                        <\/script>
+                        <script>${js}<\/script>
+                    </body>
+                </html>
+            `;
+            iframe.srcdoc = combinedCode;
+        }
+
+        window.addEventListener('message', (e) => {
+            const output = document.getElementById('console-output');
+            const div = document.createElement('div');
+            if(e.data.type === 'log') {
+                div.className = 'console-log';
+                div.innerText = "> " + e.data.val;
+            } else if(e.data.type === 'error') {
+                div.className = 'console-error';
+                div.innerText = "❌ Error: " + e.data.val;
+                const tip = document.createElement('div');
+                tip.className = 'console-tip';
+                tip.innerText = getSmartTip(e.data.val);
+                div.appendChild(tip);
+            }
+            output.appendChild(div);
+        });
+
+        function getSmartTip(err) {
+            if(err.includes('unexpected token')) return "TIP: Check for a missing semicolon (;) or an unclosed brace {}.";
+            if(err.includes('not defined')) return "TIP: You are using a variable name that doesn't exist. Check your spelling!";
+            if(err.includes('assignment to constant')) return "TIP: You tried to change a 'const' variable. Use 'let' instead.";
+            return "TIP: Review the Study Library for the correct syntax rules.";
+        }
+
         // SERVICE WORKER REGISTRATION
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
