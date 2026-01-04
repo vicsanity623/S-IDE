@@ -13,8 +13,8 @@
 
     <style>
         :root {
-            --bg: #05050a;
-            --panel-bg: rgba(25, 25, 45, 0.75);
+            --bg: #0a0a12;
+            --panel: #161625;
             --accent: #00f2ff;
             --accent-grad: linear-gradient(135deg, #00f2ff, #7000ff);
             --border: rgba(255, 255, 255, 0.1);
@@ -26,23 +26,19 @@
             margin: 0;
             height: 100vh;
             background: var(--bg);
-            background-image: radial-gradient(circle at 50% -20%, #1e1e4a, transparent);
             color: #f0f0f7;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            font-family: -apple-system, system-ui, sans-serif;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        /* FIXED NOTCH BLEEDING */
         header {
-            padding-top: calc(max(25px, env(safe-area-inset-top)));
-            padding-left: calc(env(safe-area-inset-left) + 20px);
-            padding-right: calc(env(safe-area-inset-right) + 20px);
+            padding-top: calc(max(30px, env(safe-area-inset-top)));
+            padding-left: 20px;
+            padding-right: 20px;
             padding-bottom: 15px;
-            background: rgba(10, 10, 20, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: #0f0f1e;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -57,56 +53,80 @@
             font-weight: 700; font-size: 14px; box-shadow: 0 4px 15px rgba(0, 242, 255, 0.2);
         }
         .btn:active { transform: scale(0.95); }
-        .btn-secondary { background: rgba(255, 255, 255, 0.1); box-shadow: none; border: 1px solid rgba(255,255,255,0.05); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.1); box-shadow: none; }
 
+        /* THE FIX: Ensure main is a scrolling block container */
         main {
-            flex: 1; display: flex; flex-direction: column; padding: 15px;
-            padding-bottom: calc(env(safe-area-inset-bottom) + 20px); 
-            gap: 15px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: block; /* Removed flex to prevent collapsing lines */
         }
 
-        /* EDITOR PANEL STYLE */
+        /* EDITOR PANEL - Fixed Height Fix */
         .editor-window {
-            background: var(--panel-bg); border: 1px solid var(--border);
-            border-radius: 20px; display: flex; flex-direction: column;
-            overflow: hidden; backdrop-filter: blur(15px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 380px; /* Force visibility */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
 
         .editor-label {
-            padding: 12px 16px; background: rgba(255, 255, 255, 0.04);
-            font-size: 11px; font-weight: 800; text-transform: uppercase;
-            color: rgba(255,255,255,0.4); display: flex; justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.5);
+            display: flex;
+            justify-content: space-between;
         }
 
-        /* HELPER BAR */
         .coding-helper-bar {
-            display: flex; background: rgba(0, 0, 0, 0.3);
-            padding: 8px; gap: 6px; border-bottom: 1px solid var(--border);
-            overflow-x: auto; scrollbar-width: none;
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            gap: 6px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            white-space: nowrap;
         }
         .coding-helper-bar::-webkit-scrollbar { display: none; }
 
         .helper-btn {
-            background: rgba(255,255,255,0.08); color: #fff; border: none;
-            padding: 10px 14px; border-radius: 8px; font-family: monospace;
-            font-weight: 600; font-size: 14px; min-width: 48px;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-weight: 600;
+            font-size: 14px;
+            min-width: 50px;
         }
-        .helper-btn:active { background: var(--accent); color: #000; }
 
-        /* TEXTAREA INPUT */
         .studio-textarea {
-            width: 100%; min-height: 250px; background: #0c0c14;
-            color: #d1d1e0; font-family: 'SF Mono', 'Menlo', monospace;
-            font-size: 16px; border: none; padding: 15px;
-            resize: none; outline: none; line-height: 1.5;
+            flex: 1;
+            width: 100%;
+            background: #0c0c14;
+            color: #fff;
+            font-family: 'SF Mono', monospace;
+            font-size: 16px;
+            border: none;
+            padding: 15px;
+            resize: none;
+            outline: none;
         }
 
-        /* PREVIEW AREA */
-        #preview-window { flex: 1; min-height: 400px; }
-        #preview-frame { width: 100%; flex: 1; background: white; border: none; border-radius: 0 0 20px 20px; }
-
-        #console { background: #000; color: #00ffcc; font-family: monospace; font-size: 12px; padding: 12px; height: 80px; overflow-y: auto; }
+        #preview-window { height: auto; min-height: 400px; }
+        #preview-frame { width: 100%; height: 300px; background: white; border: none; }
+        #console { background: #000; color: #00ffcc; font-family: monospace; font-size: 12px; padding: 12px; min-height: 80px; }
         #tutor { background: #0a1512; color: #2ee59d; font-size: 13px; padding: 12px; border-top: 1px solid rgba(46, 229, 157, 0.2); }
     </style>
 </head>
@@ -121,70 +141,70 @@
     </div>
 </header>
 
-<main id="editor-area">
-    <!-- Panels will be injected here -->
-    
+<main id="main-area">
+    <!-- Code panels appear here -->
+
     <div class="editor-window" id="preview-window">
         <div class="editor-label">Live Preview</div>
         <iframe id="preview-frame" sandbox="allow-scripts allow-same-origin"></iframe>
         <div id="console">System Ready...</div>
-        <div id="tutor">AI Tutor: Add a code panel to start.</div>
+        <div id="tutor">AI Tutor: Write some HTML and click Run.</div>
     </div>
 </main>
 
 <script>
     let pyodide, pyReady = false;
-    let panelCount = 0;
+    let panelIdCounter = 0;
 
-    // Load Python
     (async () => { 
         try { pyodide = await loadPyodide(); pyReady = true; } catch(e) {} 
     })();
 
     function addNewPanel(content = "") {
-        panelCount++;
-        const panelId = `s-editor-${panelCount}`;
+        panelIdCounter++;
+        const id = `editor-${panelIdCounter}`;
         
-        const panelHtml = `
-            <div class="editor-window" id="wrapper-${panelId}">
-                <div class="editor-label">
-                    <span>Editor ${panelCount}</span>
-                    <span onclick="document.getElementById('wrapper-${panelId}').remove()" style="opacity:0.5; font-size:18px">✕</span>
-                </div>
-                <div class="coding-helper-bar">
-                    <button class="helper-btn" onclick="performUndo('${panelId}')" style="color: #f87171;">UNDO</button>
-                    <button class="helper-btn" onclick="insertStudio('${panelId}', '  ')">TAB</button>
-                    <button class="helper-btn" onclick="insertStudio('${panelId}', '<')">&lt;</button>
-                    <button class="helper-btn" onclick="insertStudio('${panelId}', '>')">&gt;</button>
-                    <button class="helper-btn" onclick="insertStudio('${panelId}', '/')">/</button>
-                    <button class="helper-btn" onclick="insertStudio('${panelId}', '{')">{</button>
-                    <button class="helper-btn" onclick="insertStudio('${panelId}', '}')">}</button>
-                    <button class="helper-btn" onclick="insertStudio('${panelId}', '\u0022')">"</button>
-                    <button class="helper-btn" onclick="insertStudio('${panelId}', '=')">=</button>
-                </div>
-                <textarea id="${panelId}" class="studio-textarea" spellcheck="false" placeholder="/* Write code here */">${content || '<h1>Hello World</h1>'}</textarea>
+        const panel = document.createElement('div');
+        panel.className = 'editor-window';
+        panel.id = `container-${id}`;
+        
+        panel.innerHTML = `
+            <div class="editor-label">
+                <span>Code Editor</span>
+                <span onclick="document.getElementById('container-${id}').remove()" style="padding:0 5px;">✕</span>
             </div>
+            <div class="coding-helper-bar">
+                <button class="helper-btn" onclick="performUndo('${id}')" style="color:#ff5f5f">UNDO</button>
+                <button class="helper-btn" onclick="insertStudio('${id}', '  ')">TAB</button>
+                <button class="helper-btn" onclick="insertStudio('${id}', '<')">&lt;</button>
+                <button class="helper-btn" onclick="insertStudio('${id}', '>')">&gt;</button>
+                <button class="helper-btn" onclick="insertStudio('${id}', '/')">/</button>
+                <button class="helper-btn" onclick="insertStudio('${id}', '{')">{</button>
+                <button class="helper-btn" onclick="insertStudio('${id}', '}')">}</button>
+                <button class="helper-btn" onclick="insertStudio('${id}', '\u0022')">"</button>
+            </div>
+            <textarea id="${id}" class="studio-textarea" spellcheck="false" placeholder="Enter code here...">${content || '<h1>Hello World</h1>'}</textarea>
         `;
 
-        // Insert before the preview window
-        const previewWin = document.getElementById('preview-window');
-        previewWin.insertAdjacentHTML('beforebegin', panelHtml);
+        // Always add panels ABOVE the preview window
+        const main = document.getElementById('main-area');
+        const preview = document.getElementById('preview-window');
+        main.insertBefore(panel, preview);
     }
 
     function insertStudio(id, text) {
-        const textarea = document.getElementById(id);
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const val = textarea.value;
-        textarea.value = val.substring(0, start) + text + val.substring(end);
-        textarea.selectionStart = textarea.selectionEnd = start + text.length;
-        textarea.focus();
+        const el = document.getElementById(id);
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        el.value = el.value.substring(0, start) + text + el.value.substring(end);
+        el.selectionStart = el.selectionEnd = start + text.length;
+        el.focus();
     }
 
     function performUndo(id) {
-        const textarea = document.getElementById(id);
-        textarea.focus();
-        document.execCommand('undo', false, null);
+        const el = document.getElementById(id);
+        el.focus();
+        document.execCommand('undo');
     }
 
     async function runProject() {
@@ -192,12 +212,11 @@
         let html = "", css = "", js = "", py = "";
 
         textareas.forEach(t => {
-            const code = t.value;
-            // Simple logic to detect where code belongs
-            if(code.includes('<') && code.includes('>')) html += code;
-            else if(code.includes('{') && code.includes(':')) css += code;
-            else if(code.includes('def ') || code.includes('print(')) py += code;
-            else js += code;
+            const val = t.value;
+            if(val.includes('<') && val.includes('>')) html += val;
+            else if(val.includes('{') && val.includes(':')) css += val;
+            else if(val.includes('def ') || val.includes('print(')) py += val;
+            else js += val;
         });
 
         const consoleEl = document.getElementById("console");
@@ -205,7 +224,7 @@
             if(!pyReady) { consoleEl.innerText = "Python loading..."; return; }
             try { 
                 const res = await pyodide.runPythonAsync(py);
-                consoleEl.innerText = res || "Python executed.";
+                consoleEl.innerText = res || "Python Success.";
             } catch(e) { consoleEl.innerText = e; }
         }
 
@@ -216,7 +235,7 @@
         doc.close();
     }
 
-    // Initialize with one panel
+    // Start with one panel visible
     addNewPanel();
 </script>
 
