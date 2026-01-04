@@ -88,12 +88,27 @@ main {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
+/* IMPORTANT FIX: headers never block input */
 .panel-header {
   padding: 6px 10px;
   background: #181836;
   font-size: 12px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* CodeMirror must always receive touch */
+.cm-editor {
+  flex: 1;
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-user-select: text;
+  user-select: text;
+  position: relative;
+  z-index: 2;
 }
 
 #preview {
@@ -101,6 +116,12 @@ main {
   height: 100%;
   border: none;
   background: white;
+  pointer-events: auto;
+}
+
+/* Disable preview interaction while editing */
+body.editing #preview {
+  pointer-events: none;
 }
 
 #console {
@@ -121,6 +142,7 @@ main {
   border-top: 1px solid #1e3f34;
 }
 
+/* Overlay must not block editors when hidden */
 .overlay {
   position: absolute;
   inset: 0;
@@ -129,6 +151,11 @@ main {
   align-items: center;
   justify-content: center;
   z-index: 10;
+  pointer-events: none;
+}
+
+.overlay[style*="flex"] {
+  pointer-events: auto;
 }
 
 .overlay div {
@@ -137,6 +164,7 @@ main {
   border-radius: 12px;
   max-width: 420px;
   text-align: center;
+  pointer-events: auto;
 }
 
 @media (max-width: 900px) {
@@ -218,6 +246,7 @@ function addPanel(content=""){
       })
     ]
   });
+
   const view=new CM.EditorView({state,parent:editorDiv});
   editors.push(view);
 }
@@ -273,6 +302,14 @@ function toggleCurriculum(){
   const o=document.getElementById("curriculum");
   o.style.display=o.style.display==="flex"?"none":"flex";
 }
+
+/* iOS / touch focus management */
+document.addEventListener("focusin",e=>{
+  if(e.target.closest(".cm-editor")) document.body.classList.add("editing");
+});
+document.addEventListener("focusout",e=>{
+  if(e.target.closest(".cm-editor")) document.body.classList.remove("editing");
+});
 
 restore();
 
