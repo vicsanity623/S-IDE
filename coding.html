@@ -5,12 +5,12 @@
 <title>DevStudio Playground</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="DevQuest">
-<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-title" content="DevStudio">
 
 <!-- Pyodide -->
 <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
@@ -22,32 +22,31 @@
   --border: #2a2a40;
   --text: #e6e6f0;
   --accent: #7aa2ff;
-  --green: #3ddc97;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  height: 100vh;
   background: linear-gradient(180deg, #0a0a0f, #0f1224);
   color: var(--text);
-  height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   display: flex;
   flex-direction: column;
 }
 
 header {
-  padding: 14px 20px;
+  padding: 14px 18px;
   background: linear-gradient(90deg, #14142b, #0f1224);
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid var(--border);
 }
 
 header h1 {
-  font-size: 18px;
+  font-size: 16px;
   margin: 0;
   font-weight: 600;
 }
@@ -56,7 +55,7 @@ button {
   background: var(--accent);
   color: #000;
   border: none;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
@@ -91,16 +90,10 @@ main {
 }
 
 .panel-header {
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: #181836;
   font-size: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.panel-header span {
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 textarea {
@@ -110,40 +103,31 @@ textarea {
   border: none;
   padding: 12px;
   resize: none;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: ui-monospace, Menlo, monospace;
   font-size: 14px;
   outline: none;
 }
 
 #preview {
-  background: white;
-  border-radius: 12px;
-  border: none;
   width: 100%;
   height: 100%;
+  border: none;
+  background: white;
+  border-radius: 12px;
 }
 
 #console {
-  background: black;
+  background: #000;
   color: #00ffcc;
   font-family: monospace;
-  font-size: 13px;
-  padding: 10px;
+  font-size: 12px;
+  padding: 8px;
+  height: 140px;
   overflow-y: auto;
-  height: 150px;
 }
-
-.plus {
-  cursor: pointer;
-  font-size: 18px;
-  opacity: 0.7;
-}
-.plus:hover { opacity: 1; }
 
 @media (max-width: 900px) {
-  main {
-    grid-template-columns: 1fr;
-  }
+  main { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -160,11 +144,9 @@ textarea {
 
 <main>
   <div id="editor-area">
-    <div class="panel" data-type="main">
-      <div class="panel-header">
-        <span>Main Code (auto-detect)</span>
-      </div>
-      <textarea id="mainEditor">
+    <div class="panel">
+      <div class="panel-header">Main Code (auto-detect)</div>
+      <textarea>
 <h1>Hello World</h1>
 <p>Edit me and press Run.</p>
       </textarea>
@@ -172,112 +154,111 @@ textarea {
   </div>
 
   <div class="panel">
-    <iframe id="preview"></iframe>
+    <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
     <div id="console"></div>
   </div>
 </main>
 
 <script>
-let pyodideReady = false;
-let pyodide;
+let pyodide = null;
+let pyReady = false;
 
-async function initPyodide() {
-  pyodide = await loadPyodide();
-  pyodideReady = true;
-}
-initPyodide();
+(async () => {
+  try {
+    pyodide = await loadPyodide();
+    pyReady = true;
+  } catch (e) {
+    console.warn("Pyodide failed to load", e);
+  }
+})();
 
 function detectLanguage(code) {
-  if (/^\s*<.+>/s.test(code)) return "html";
-  if (/def |print\(|import /s.test(code)) return "python";
-  if (/function |=>|console\.log/s.test(code)) return "javascript";
-  if (/{.*:.*;}/s.test(code)) return "css";
+  if (code.trim().startsWith("<")) return "html";
+  if (/^\s*(def |import |print\()/m.test(code)) return "python";
+  if (/console\.log|function |\=\>/m.test(code)) return "javascript";
+  if (/{[^}]*:[^}]*;/.test(code)) return "css";
   return "html";
 }
 
-function addPanel(type = null) {
+function addPanel() {
   const panel = document.createElement("div");
   panel.className = "panel";
-  panel.dataset.type = type || "auto";
-
   panel.innerHTML = `
-    <div class="panel-header">
-      <span>Secondary Panel (auto)</span>
-    </div>
+    <div class="panel-header">Secondary Panel (auto)</div>
     <textarea></textarea>
   `;
   document.getElementById("editor-area").appendChild(panel);
 }
 
-function collectPanels() {
-  const panels = document.querySelectorAll("#editor-area .panel");
-  let result = { html: "", css: "", js: "", py: "" };
+function collect() {
+  const panels = document.querySelectorAll("#editor-area textarea");
+  let data = { html: "", css: "", js: "", py: "" };
 
-  panels.forEach(p => {
-    const code = p.querySelector("textarea").value;
+  panels.forEach(t => {
+    const code = t.value;
     const lang = detectLanguage(code);
-
-    if (lang === "html") result.html += code;
-    if (lang === "css") result.css += code;
-    if (lang === "javascript") result.js += code;
-    if (lang === "python") result.py += code;
+    if (lang === "html") data.html += code;
+    if (lang === "css") data.css += code;
+    if (lang === "javascript") data.js += code;
+    if (lang === "python") data.py += code;
   });
 
-  return result;
+  return data;
 }
 
 async function run() {
-  const out = document.getElementById("console");
-  out.textContent = "";
+  const consoleEl = document.getElementById("console");
+  consoleEl.textContent = "";
 
-  const { html, css, js, py } = collectPanels();
+  const { html, css, js, py } = collect();
 
   if (py.trim()) {
-    if (!pyodideReady) {
-      out.textContent = "Python runtime loading...";
+    if (!pyReady) {
+      consoleEl.textContent = "Python runtime loading…";
       return;
     }
     try {
       const result = await pyodide.runPythonAsync(py);
-      if (result !== undefined) out.textContent += result + "\n";
+      if (result !== undefined) consoleEl.textContent += result + "\n";
     } catch (e) {
-      out.textContent += e + "\n";
+      consoleEl.textContent += e + "\n";
     }
     return;
   }
 
   const iframe = document.getElementById("preview");
-  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  const doc = iframe.contentDocument;
 
   doc.open();
   doc.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>${css}</style>
-    </head>
-    <body>
-      ${html}
-      <script>
-        try {
-          ${js}
-        } catch(e) {
-          parent.document.getElementById("console").textContent += e + "\\n";
-        }
-      </script>
-    </body>
-    </html>
+<!DOCTYPE html>
+<html>
+<head>
+<style>${css}</style>
+</head>
+<body>
+${html}
+<script>
+try {
+${js}
+} catch (e) {
+parent.document.getElementById("console").textContent += e + "\\n";
+}
+</script>
+</body>
+</html>
   `);
   doc.close();
 }
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').then(reg => {
-            console.log('SW Registered');
-        }).catch(err => {
-            console.log('SW Registration Failed', err);
-        });
-    });
+
+/* Service Worker — SAFE */
+if (
+  'serviceWorker' in navigator &&
+  location.protocol !== 'file:'
+) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log('SW registered'))
+    .catch(err => console.warn('SW skipped', err));
 }
 </script>
 
