@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DevStudio SOTA</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d0d12">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DevStudio">
     
+    <!-- iOS ICON (You need an image file named icon.png in the folder) -->
+    <link rel="apple-touch-icon" href="icon.png">
+
     <style>
         :root {
             --bg: #0d0d12;
@@ -24,7 +32,6 @@
             background-color: var(--bg);
             color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            /* Important: Allow native scrolling */
             overflow-x: hidden;
             overflow-y: auto;
             padding-bottom: 50px;
@@ -45,7 +52,7 @@
             justify-content: space-between;
             padding: 0 16px;
             z-index: 1000;
-            padding-top: env(safe-area-inset-top); /* Notch support */
+            padding-top: env(safe-area-inset-top);
         }
 
         .logo { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; color: #fff; }
@@ -62,10 +69,10 @@
         }
         .run-btn:active { opacity: 0.8; transform: scale(0.98); }
 
-        /* --- 3. MAIN CONTENT (Standard Block Flow) --- */
+        /* --- 3. MAIN CONTENT --- */
         main {
-            display: block; /* Ensures stacking */
-            margin-top: calc(60px + env(safe-area-inset-top)); /* Clear header */
+            display: block;
+            margin-top: calc(60px + env(safe-area-inset-top));
             padding: 16px;
             max-width: 800px;
             margin-left: auto;
@@ -77,7 +84,7 @@
             background: var(--panel-bg);
             border: var(--border);
             border-radius: 12px;
-            margin-bottom: 24px; /* Space between panels */
+            margin-bottom: 24px;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             display: flex;
@@ -97,7 +104,6 @@
             align-items: center;
         }
 
-        /* Toolbar */
         .toolbar {
             display: flex;
             gap: 8px;
@@ -117,10 +123,9 @@
             min-width: 32px;
         }
 
-        /* Textareas */
         .code-editor {
             width: 100%;
-            min-height: 220px; /* Force height so it can't collapse */
+            min-height: 220px;
             background: #08080c;
             color: #dcdcdc;
             border: none;
@@ -134,7 +139,6 @@
         
         .code-editor::placeholder { color: #444; }
 
-        /* --- 5. PREVIEW WINDOW --- */
         #preview-container {
             border: var(--border);
             border-radius: 12px;
@@ -151,7 +155,6 @@
             background: white;
         }
 
-        /* --- 6. CONSOLE --- */
         #console {
             background: #111;
             color: #0f0;
@@ -161,7 +164,7 @@
             border-top: 1px solid #333;
             max-height: 200px;
             overflow-y: auto;
-            display: none; /* Hidden until Run */
+            display: none;
         }
         .log-error { color: #ff5555; }
         .log-warn { color: #ffcc00; }
@@ -268,7 +271,16 @@ document.getElementById('myBtn').addEventListener('click', function() {
     </main>
 
     <script>
-        // Insert Helper
+        // PWA SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.log('SW fail', err));
+            });
+        }
+
+        // --- Editor Functions ---
         function ins(id, txt) {
             const el = document.getElementById(id);
             const start = el.selectionStart;
@@ -279,7 +291,6 @@ document.getElementById('myBtn').addEventListener('click', function() {
             el.focus();
         }
 
-        // Logger Helper
         function logToConsole(msg, type = 'info') {
             const c = document.getElementById('console');
             c.style.display = 'block';
@@ -290,20 +301,17 @@ document.getElementById('myBtn').addEventListener('click', function() {
             c.scrollTop = c.scrollHeight;
         }
 
-        // Run Logic
         function runCode() {
             const htmlVal = document.getElementById('html').value;
             const cssVal = document.getElementById('css').value;
             const jsVal = document.getElementById('js').value;
             
-            // Clear Console
             const consoleEl = document.getElementById('console');
             consoleEl.innerHTML = '';
             consoleEl.style.display = 'none';
 
             let finalHtml = htmlVal;
 
-            // 1. Inject CSS
             if (finalHtml.includes('href="style.css"') || finalHtml.includes("href='style.css'")) {
                 finalHtml = finalHtml.replace(
                     /<link[^>]+href=["']style.css["'][^>]*>/i, 
@@ -311,7 +319,6 @@ document.getElementById('myBtn').addEventListener('click', function() {
                 );
             }
 
-            // 2. Prepare JS with Error Trapping
             const protectedJs = `
             try {
                 ${jsVal}
@@ -320,7 +327,6 @@ document.getElementById('myBtn').addEventListener('click', function() {
             }
             `;
 
-            // 3. Inject JS
             if (finalHtml.includes('src="script.js"') || finalHtml.includes("src='script.js'")) {
                 finalHtml = finalHtml.replace(
                     /<script[^>]+src=["']script.js["'][^>]*><\/script>/i, 
@@ -328,25 +334,21 @@ document.getElementById('myBtn').addEventListener('click', function() {
                 );
             }
 
-            // 4. Inject Console Interceptor
             const interceptor = `
             <script>
                 (function(){
                     const _log = console.log;
                     const _err = console.error;
                     const _warn = console.warn;
-
                     function send(type, args){
                         try {
                             const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
                             window.parent.postMessage({type: 'console', level: type, msg: msg}, '*');
                         } catch(e) {}
                     }
-
                     console.log = (...args) => { _log.apply(console, args); send('info', args); };
                     console.error = (...args) => { _err.apply(console, args); send('error', args); };
                     console.warn = (...args) => { _warn.apply(console, args); send('warn', args); };
-                    
                     window.onerror = function(msg, url, line) {
                         send('error', [msg + " (Line " + line + ")"]);
                     };
@@ -355,13 +357,10 @@ document.getElementById('myBtn').addEventListener('click', function() {
             `;
             
             finalHtml = finalHtml + interceptor;
-
-            // 5. Render
             const iframe = document.getElementById('preview-frame');
             iframe.srcdoc = finalHtml;
         }
 
-        // Listen for logs
         window.addEventListener('message', (e) => {
             if (e.data && e.data.type === 'console') {
                 logToConsole(e.data.msg, e.data.level);
