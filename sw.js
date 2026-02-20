@@ -1,66 +1,61 @@
-const GAME_VERSION = 'v0.0.1'; // Incremented version
-const CACHE_NAME = `SandIDE-${GAME_VERSION}`;
+const CACHE_NAME = 'sandbox-ide-v0.0.1';
 
-// Added manifest.json to the assets list
-const ASSETS = [
-    './',
-    './index.html',
-    './manifest.json' 
+// URLs to cache for true offline capabilities
+const urlsToCache = [
+  './',
+  './manifest.json',
+  './side.png', // Update with your actual image name if needed
+  // CodeMirror Core
+  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js',
+  // CodeMirror Modes
+  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js',
+  // Libraries
+  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js'
 ];
 
-// 1. INSTALL: Cache files and force activation
-self.addEventListener('install', (e) => {
-    console.log(`[SW] Installing ${GAME_VERSION}`);
-    self.skipWaiting(); 
-    e.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS);
-        })
-    );
+// Install Event - Cache all required assets
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache, storing SOTA assets.');
+        return cache.addAll(urlsToCache);
+      })
+  );
 });
 
-// 2. ACTIVATE: Delete OLD caches
-self.addEventListener('activate', (e) => {
-    console.log(`[SW] Activating ${GAME_VERSION}`);
-    e.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
-                keys.map((key) => {
-                    if (key !== CACHE_NAME) {
-                        console.log(`[SW] Deleting old cache: ${key}`);
-                        return caches.delete(key);
-                    }
-                })
-            );
-        })
-    );
-    return self.clients.claim(); 
+// Fetch Event - Serve from Cache first, then Network
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      })
+  );
 });
 
-// 3. FETCH: Network First, then Update Cache, Fallback to Cache
-// This ensures the user ALWAYS has the latest version when online,
-// but the offline version stays updated too.
-self.addEventListener('fetch', (e) => {
-    e.respondWith(
-        fetch(e.request)
-            .then((response) => {
-                // Check if we received a valid response
-                if (!response || response.status !== 200 || response.type !== 'basic') {
-                    return response;
-                }
-
-                // IMPORTANT: Clone the response and update the cache 
-                // so the "Offline" version is always the latest one seen.
-                const responseToCache = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(e.request, responseToCache);
-                });
-
-                return response;
-            })
-            .catch(() => {
-                // If network fails (offline), return the cached version
-                return caches.match(e.request);
-            })
-    );
+// Activate Event - Clean up old caches if you update the version number
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
 });
