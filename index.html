@@ -2,503 +2,265 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DevStudio + Rust</title>
-    <meta name="theme-color" content="#0d0d12">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Sandbox IDE</title>
+    
+    <!-- CodeMirror Editor Dependencies -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
 
     <style>
         :root {
-            --bg: #0d0d12;
-            --panel-bg: #161622;
-            --header-bg: rgba(22, 22, 34, 0.95);
-            --accent: #2979ff;
-            --rust-color: #dea584; /* Rust Logo Color */
-            --js-color: #f7df1e;
-            --text-main: #e0e0e0;
-            --text-dim: #888;
-            --border: 1px solid rgba(255, 255, 255, 0.1);
+            --bg-dark: #1e1e2e;
+            --bg-panel: #282a36;
+            --text-main: #f8f8f2;
+            --accent: #bd93f9;
+            --border: #44475a;
         }
 
-        /* --- RESET & BASE --- */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body { height: 100vh; display: flex; flex-direction: column; background: var(--bg-dark); color: var(--text-main); }
+
+        /* Toolbar */
+        #toolbar { height: 50px; background: var(--bg-panel); display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid var(--border); justify-content: space-between; }
+        .btn { background: var(--accent); color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn:hover { opacity: 0.9; }
+        .btn-outline { background: transparent; color: var(--text-main); border: 1px solid var(--border); }
+        .btn-outline:hover { background: var(--border); }
+
+        /* Main Workspace */
+        #workspace { display: flex; flex: 1; height: calc(100vh - 50px); }
+
+        /* Sidebar (Files) */
+        #sidebar { width: 200px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #8be9fd; }
+        #file-list { flex: 1; overflow-y: auto; list-style: none; }
+        .file-item { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid var(--border); font-family: monospace; font-size: 14px; }
+        .file-item:hover { background: #44475a; }
+        .file-item.active { background: var(--accent); color: #000; font-weight: bold; }
+
+        /* Editor Area */
+        #editor-container { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .panel-header { background: var(--bg-panel); padding: 5px 15px; font-size: 13px; font-family: monospace; border-bottom: 1px solid var(--border); color: #f1fa8c; }
+        .CodeMirror { flex: 1; height: 100% !important; font-size: 14px; }
+
+        /* Right Panel (Preview + Console) */
+        #right-panel { width: 40%; display: flex; flex-direction: column; }
+        #preview-container { flex: 1; display: flex; flex-direction: column; border-bottom: 1px solid var(--border); }
+        iframe { flex: 1; border: none; background: #fff; width: 100%; }
+
+        #console-container { height: 30%; display: flex; flex-direction: column; background: var(--bg-panel); }
+        #console-output { flex: 1; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 13px; color: #f8f8f2; }
+        .log-row { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        .log-error { color: #ff5555; }
+        .log-warn { color: #f1fa8c; }
         
-        body {
-            margin: 0;
-            background-color: var(--bg);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            overflow-x: hidden;
-            overflow-y: auto;
-            padding-bottom: 80px;
-        }
-
-        /* --- HEADER --- */
-        header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 60px;
-            background: var(--header-bg);
-            backdrop-filter: blur(10px);
-            border-bottom: var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            z-index: 1000;
-            padding-top: env(safe-area-inset-top);
-        }
-
-        .logo { font-weight: 800; font-size: 18px; color: #fff; }
-        
-        .run-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 2px 10px rgba(41, 121, 255, 0.3);
-            transition: 0.2s;
-        }
-        .run-btn:active { transform: scale(0.95); }
-
-        /* --- MODE SWITCHER --- */
-        .mode-container {
-            display: flex;
-            justify-content: center;
-            margin-top: calc(70px + env(safe-area-inset-top));
-            margin-bottom: 15px;
-        }
-        
-        .mode-switch {
-            background: #222;
-            border-radius: 8px;
-            padding: 4px;
-            display: flex;
-            border: var(--border);
-        }
-
-        .mode-opt {
-            padding: 8px 24px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #666;
-            cursor: pointer;
-            transition: 0.3s ease;
-        }
-
-        .mode-opt.active-js { background: var(--js-color); color: #000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .mode-opt.active-rust { background: var(--rust-color); color: #000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-
-        /* --- CONTENT --- */
-        main {
-            padding: 0 16px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        /* --- PANELS --- */
-        .panel {
-            background: var(--panel-bg);
-            border: var(--border);
-            border-radius: 12px;
-            margin-bottom: 20px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: opacity 0.3s, filter 0.3s;
-        }
-
-        /* Dim inactive panels */
-        .panel.disabled {
-            opacity: 0.4;
-            filter: grayscale(1);
-            pointer-events: none;
-        }
-
-        .panel-header {
-            padding: 10px 16px;
-            background: rgba(255,255,255,0.03);
-            border-bottom: var(--border);
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .toolbar {
-            display: flex;
-            gap: 8px;
-            padding: 8px 12px;
-            background: #0a0a10;
-            border-bottom: var(--border);
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .tool-btn {
-            background: #1f1f2e;
-            color: #ccc;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 10px;
-            font-family: monospace;
-            font-size: 13px;
-            min-width: 32px;
-            flex-shrink: 0;
-        }
-
-        .code-editor {
-            width: 100%;
-            min-height: 200px;
-            background: #08080c;
-            color: #dcdcdc;
-            border: none;
-            padding: 16px;
-            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
-            font-size: 13px;
-            line-height: 1.5;
-            resize: vertical;
-        }
-        
-        .code-editor::placeholder { color: #444; }
-
-        /* --- PREVIEW AREA --- */
-        #preview-container {
-            border: var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            background: #fff;
-            margin-top: 10px;
-        }
-        
-        iframe {
-            display: block;
-            width: 100%;
-            height: 300px;
-            border: none;
-            background: white;
-        }
-
-        /* --- CONSOLE --- */
-        #console {
-            background: #111;
-            color: #0f0;
-            padding: 12px;
-            font-family: monospace;
-            font-size: 12px;
-            border-top: 1px solid #333;
-            max-height: 250px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            display: none; /* Hidden by default */
-        }
-        .log-error { color: #ff5555; border-left: 2px solid #ff5555; padding-left: 8px; margin-bottom: 4px;}
-        .log-warn { color: #ffcc00; }
-        .log-info { color: #fff; border-left: 2px solid #555; padding-left: 8px; margin-bottom: 4px;}
-        .log-rust { color: #dea584; border-left: 2px solid #dea584; padding-left: 8px; margin-bottom: 4px;}
-        .log-sys { color: #888; font-style: italic; margin-bottom: 4px; }
-
+        .clear-btn { float: right; background: none; border: 1px solid var(--border); color: #fff; cursor: pointer; padding: 2px 6px; border-radius: 3px; font-size: 11px; }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo">DevQuest</div>
-        <button class="run-btn" onclick="runAll()">▶ Run</button>
-    </header>
-
-    <!-- LOGIC SWITCHER -->
-    <div class="mode-container">
-        <div class="mode-switch">
-            <div id="mode-js" class="mode-opt active-js" onclick="setMode('js')">JavaScript</div>
-            <div id="mode-rust" class="mode-opt" onclick="setMode('rust')">Rust</div>
+    <div id="toolbar">
+        <div>
+            <h2>🛠️ Sandbox IDE</h2>
+        </div>
+        <div>
+            <button class="btn" onclick="runCode()">▶ Run</button>
         </div>
     </div>
 
-    <main>
-        
-        <!-- HTML Panel -->
-        <div class="panel">
-            <div class="panel-header">
-                <span style="color: #e44d26">● HTML</span>
-                <small>index.html</small>
+    <div id="workspace">
+        <!-- File Manager -->
+        <div id="sidebar">
+            <div class="sidebar-header">
+                Files
+                <button class="btn btn-outline" style="padding: 2px 8px;" onclick="createFile()">+</button>
             </div>
-            <div class="toolbar">
-                <button class="tool-btn" onclick="ins('html', '<')">&lt;</button>
-                <button class="tool-btn" onclick="ins('html', '>')">&gt;</button>
-                <button class="tool-btn" onclick="ins('html', '/')">/</button>
-                <button class="tool-btn" onclick="ins('html', 'div')">div</button>
-                <button class="tool-btn" onclick="ins('html', 'class=')">cls</button>
-            </div>
-            <textarea id="html" class="code-editor" spellcheck="false" placeholder="HTML Code...">
-<h2>Logic Comparison</h2>
-<p id="output">Click run to test.</p>
-<button id="myBtn">Click Me</button>
-            </textarea>
+            <ul id="file-list"></ul>
         </div>
 
-        <!-- CSS Panel -->
-        <div class="panel">
-            <div class="panel-header">
-                <span style="color: #264de4">● CSS</span>
-                <small>style.css</small>
-            </div>
-            <div class="toolbar">
-                <button class="tool-btn" onclick="ins('css', '{')">{</button>
-                <button class="tool-btn" onclick="ins('css', '}')">}</button>
-                <button class="tool-btn" onclick="ins('css', ':')">:</button>
-                <button class="tool-btn" onclick="ins('css', ';')">;</button>
-            </div>
-            <textarea id="css" class="code-editor" spellcheck="false" placeholder="CSS Code...">
-body {
-    font-family: sans-serif;
-    padding: 20px;
-    background: #fff;
-    text-align: center;
-}
-button {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 16px;
-    margin-top: 15px;
-}
-            </textarea>
+        <!-- Code Editor -->
+        <div id="editor-container">
+            <div class="panel-header" id="current-file-name">index.html</div>
+            <textarea id="code-editor"></textarea>
         </div>
 
-        <!-- JS Panel -->
-        <div class="panel" id="panel-js">
-            <div class="panel-header">
-                <span style="color: #f7df1e">● JavaScript</span>
-                <small>script.js</small>
+        <!-- Preview & Console -->
+        <div id="right-panel">
+            <div id="preview-container">
+                <div class="panel-header">Live Preview</div>
+                <iframe id="preview"></iframe>
             </div>
-            <div class="toolbar">
-                <button class="tool-btn" onclick="ins('js', 'function')">fn</button>
-                <button class="tool-btn" onclick="ins('js', 'const')">const</button>
-                <button class="tool-btn" onclick="ins('js', 'console.log')">log</button>
-                <button class="tool-btn" onclick="ins('js', '=>')">=></button>
+            <div id="console-container">
+                <div class="panel-header">
+                    Console
+                    <button class="clear-btn" onclick="clearConsole()">Clear</button>
+                </div>
+                <div id="console-output"></div>
             </div>
-            <textarea id="js" class="code-editor" spellcheck="false" placeholder="JS Code...">
-// JS Mode Active
-console.log("JS: System Ready");
-
-document.getElementById('myBtn')
-  .addEventListener('click', () => {
-     console.log("JS: Button clicked");
-     alert("JS is working!");
-  });
-            </textarea>
         </div>
-
-        <!-- RUST Panel -->
-        <div class="panel disabled" id="panel-rust">
-            <div class="panel-header">
-                <span style="color: #dea584">● Rust</span>
-                <small>main.rs</small>
-            </div>
-            <div class="toolbar">
-                <button class="tool-btn" onclick="ins('rust', 'fn main() {}')">main</button>
-                <button class="tool-btn" onclick="ins('rust', 'println!')">print</button>
-                <button class="tool-btn" onclick="ins('rust', 'let mut')">let</button>
-                <button class="tool-btn" onclick="ins('rust', 'vec![]')">vec</button>
-                <button class="tool-btn" onclick="ins('rust', '::')">::</button>
-            </div>
-            <textarea id="rust" class="code-editor" spellcheck="false" placeholder="Rust Code...">
-// Rust Mode Active
-// Stdout prints to the console below
-
-fn main() {
-    println!("RUST: System Ready");
-    
-    let x = 10;
-    let y = 20;
-    println!("Calculation: {} + {} = {}", x, y, x + y);
-    
-    // Test performance
-    let start = std::time::Instant::now();
-    let mut count = 0;
-    for _ in 0..1_000_000 {
-        count += 1;
-    }
-    println!("Counted to 1M in {:?}", start.elapsed());
-}
-            </textarea>
-        </div>
-
-        <!-- Preview Result -->
-        <div id="preview-container">
-            <div class="panel-header" style="background:#fff; border-bottom:1px solid #ddd;">
-                <span style="color:#333">Preview & Console</span>
-            </div>
-            <iframe id="preview-frame"></iframe>
-            <div id="console"></div>
-        </div>
-
-    </main>
+    </div>
 
     <script>
-        // --- 1. STATE MANAGEMENT ---
-        let currentMode = 'js'; // 'js' or 'rust'
+        // 1. Initial File System State (Preloaded with user's specific scenario)
+        const files = {
+            "index.html": `<canvas id="game"></canvas>\n<script src="index.js"><\/script>`,
+            "index.js": `console.log("Canvas Element:", game);\ngame.width = 800;\ngame.height = 800;\nconst ctx = game.getContext("2d");\nconsole.log("2D Context:", ctx);\n\n// Let's draw something to test!\nctx.fillStyle = "blue";\nctx.fillRect(50, 50, 100, 100);`
+        };
 
-        function setMode(mode) {
-            currentMode = mode;
-            
-            // UI Toggle
-            const jsBtn = document.getElementById('mode-js');
-            const rustBtn = document.getElementById('mode-rust');
-            const jsPanel = document.getElementById('panel-js');
-            const rustPanel = document.getElementById('panel-rust');
+        let currentFile = "index.html";
 
-            if (mode === 'js') {
-                jsBtn.classList.add('active-js');
-                rustBtn.classList.remove('active-rust');
-                jsPanel.classList.remove('disabled');
-                rustPanel.classList.add('disabled');
-            } else {
-                rustBtn.classList.add('active-rust');
-                jsBtn.classList.remove('active-js');
-                rustPanel.classList.remove('disabled');
-                jsPanel.classList.add('disabled');
+        // 2. Initialize CodeMirror
+        const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+            lineNumbers: true,
+            theme: "dracula",
+            mode: "htmlmixed",
+            tabSize: 2
+        });
+
+        // 3. Save code changes to the virtual file system
+        editor.on("change", () => {
+            files[currentFile] = editor.getValue();
+        });
+
+        // 4. UI Rendering Functions
+        function renderFileList() {
+            const list = document.getElementById("file-list");
+            list.innerHTML = "";
+            for (const fileName in files) {
+                const li = document.createElement("li");
+                li.className = "file-item " + (fileName === currentFile ? "active" : "");
+                li.innerText = fileName;
+                li.onclick = () => openFile(fileName);
+                list.appendChild(li);
             }
         }
 
-        // --- 2. EDITOR UTILS ---
-        function ins(id, txt) {
-            const el = document.getElementById(id);
-            const start = el.selectionStart;
-            const end = el.selectionEnd;
-            const val = el.value;
-            el.value = val.substring(0, start) + txt + val.substring(end);
-            el.selectionStart = el.selectionEnd = start + txt.length;
-            el.focus();
+        function openFile(fileName) {
+            currentFile = fileName;
+            document.getElementById("current-file-name").innerText = fileName;
+            editor.setValue(files[fileName]);
+            
+            // Switch syntax highlighting mode
+            if (fileName.endsWith(".js")) editor.setOption("mode", "javascript");
+            else if (fileName.endsWith(".css")) editor.setOption("mode", "css");
+            else editor.setOption("mode", "htmlmixed");
+
+            renderFileList();
         }
 
+        function createFile() {
+            const fileName = prompt("Enter file name (e.g., style.css, script.js):");
+            if (fileName && !files[fileName]) {
+                files[fileName] = "";
+                openFile(fileName);
+            }
+        }
+
+        // 5. Console Logic
         function clearConsole() {
-            const c = document.getElementById('console');
-            c.innerHTML = '';
-            c.style.display = 'none';
+            document.getElementById("console-output").innerHTML = "";
         }
 
-        function logToConsole(msg, type = 'info') {
-            const c = document.getElementById('console');
-            c.style.display = 'block';
-            const line = document.createElement('div');
-            
-            if (type === 'rust') line.className = 'log-rust';
-            else if (type === 'error') line.className = 'log-error';
-            else if (type === 'system') line.className = 'log-sys';
-            else line.className = 'log-info';
-
-            line.textContent = '> ' + msg;
-            c.appendChild(line);
-            c.scrollTop = c.scrollHeight;
+        function logToConsole(msg, type = 'log') {
+            const output = document.getElementById("console-output");
+            const div = document.createElement("div");
+            div.className = `log-row log-${type}`;
+            div.innerText = msg;
+            output.appendChild(div);
+            output.scrollTop = output.scrollHeight;
         }
 
-        // --- 3. EXECUTION LOGIC ---
-        function runAll() {
-            clearConsole();
-            
-            // 1. Prepare HTML/CSS for Preview
-            const htmlVal = document.getElementById('html').value;
-            const cssVal = document.getElementById('css').value;
-            let finalHtml = htmlVal;
-
-            // Inject CSS
-            finalHtml = `
-                <style>${cssVal}</style>
-                ${htmlVal}
-            `;
-
-            // 2. Handle JS Logic
-            if (currentMode === 'js') {
-                const jsVal = document.getElementById('js').value;
-                logToConsole("Running JavaScript...", "system");
-                
-                // Console Interceptor for JS
-                const interceptor = `
-                <script>
-                    (function(){
-                        const _log = console.log;
-                        const _err = console.error;
-                        function send(type, args){
-                            try {
-                                const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-                                window.parent.postMessage({type: 'console', level: type, msg: msg}, '*');
-                            } catch(e) {}
-                        }
-                        console.log = (...args) => { _log.apply(console, args); send('info', args); };
-                        console.error = (...args) => { _err.apply(console, args); send('error', args); };
-                        window.onerror = function(msg, url, line) { send('error', [msg + " (Line " + line + ")"]); };
-                    })();
-                <\/script>
-                <script>${jsVal}<\/script>
-                `;
-                finalHtml += interceptor;
-                
-                // Load Iframe
-                document.getElementById('preview-frame').srcdoc = finalHtml;
-            } 
-            
-            // 3. Handle Rust Logic
-            else if (currentMode === 'rust') {
-                // Load HTML/CSS only (Visuals)
-                document.getElementById('preview-frame').srcdoc = finalHtml;
-                
-                const rustCode = document.getElementById('rust').value;
-                runRustCode(rustCode);
-            }
-        }
-
-        // --- 4. RUST API INTEGRATION ---
-        async function runRustCode(code) {
-            logToConsole("Compiling & Executing Rust (Remote)...", "system");
-
-            try {
-                // Using Rust Playground API
-                const response = await fetch('https://play.rust-lang.org/execute', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        channel: "stable",
-                        mode: "debug",
-                        edition: "2021",
-                        crateType: "bin",
-                        tests: false,
-                        code: code
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    if (result.stdout) logToConsole(result.stdout, 'rust');
-                    if (result.stderr) logToConsole(result.stderr, 'system'); // Warnings
-                } else {
-                    logToConsole("Compilation Error:", "error");
-                    logToConsole(result.stderr, "error");
-                }
-
-            } catch (err) {
-                logToConsole("Network Error: Could not reach Rust Compiler.", "error");
-            }
-        }
-
-        // --- 5. EVENT LISTENERS ---
-        window.addEventListener('message', (e) => {
-            if (e.data && e.data.type === 'console') {
-                logToConsole(e.data.msg, e.data.level);
+        // Listen for console messages sent from the iframe
+        window.addEventListener("message", (event) => {
+            if (event.data && event.data.type === 'console') {
+                logToConsole(event.data.args.join(" "), event.data.level);
             }
         });
+
+        // This script gets injected into the iframe to catch its console output safely
+        const consoleInterceptorScript = `
+            <script>
+                (function() {
+                    function serialize(arg) {
+                        if (arg === null) return 'null';
+                        if (arg === undefined) return 'undefined';
+                        // Handle HTML Elements (like <canvas>)
+                        if (arg instanceof HTMLElement) return '<' + arg.tagName.toLowerCase() + (arg.id ? ' id="' + arg.id + '"' : '') + '>';
+                        // Handle Canvas Context specifically
+                        if (arg.toString() === '[object CanvasRenderingContext2D]') return 'CanvasRenderingContext2D { canvas, fillStyle, ... }';
+                        if (typeof arg === 'object') {
+                            try { return JSON.stringify(arg, null, 2); } 
+                            catch (e) { return Object.prototype.toString.call(arg); }
+                        }
+                        return arg.toString();
+                    }
+
+                    const methods = ['log', 'warn', 'error', 'info'];
+                    methods.forEach(method => {
+                        const original = console[method];
+                        console[method] = function(...args) {
+                            window.parent.postMessage({
+                                type: 'console',
+                                level: method,
+                                args: args.map(serialize)
+                            }, '*');
+                            original.apply(console, args);
+                        };
+                    });
+
+                    window.onerror = function(msg, url, line) {
+                        console.error(msg + ' (Line: ' + line + ')');
+                        return false;
+                    };
+                })();
+            <\/script>
+        `;
+
+        // 6. The "Bundler" - Replaces <script src="..."> with inline files
+        function runCode() {
+            clearConsole();
+            
+            // Start with the user's index.html, or a blank string
+            let htmlContent = files["index.html"] || "<h1>No index.html found</h1>";
+
+            // Inject the console interceptor at the very top so it catches everything
+            htmlContent = consoleInterceptorScript + htmlContent;
+
+            // Find and replace <script src="filename.js">
+            htmlContent = htmlContent.replace(/<script\s+[^>]*src=["']([^"']+)["'][^>]*>[\s\S]*?<\/script>/gi, (match, src) => {
+                if (files[src]) {
+                    // Escape closing script tags inside the JS to prevent HTML breaking
+                    const safeJs = files[src].replace(/<\/script>/gi, "<\\/script>");
+                    return `<script>${safeJs}<\/script>`;
+                }
+                return match; // If file isn't in our sandbox, leave it alone (e.g. external CDNs)
+            });
+
+            // Find and replace <link rel="stylesheet" href="filename.css">
+            htmlContent = htmlContent.replace(/<link\s+[^>]*href=["']([^"']+)["'][^>]*>/gi, (match, href) => {
+                if (files[href]) {
+                    return `<style>${files[href]}</style>`;
+                }
+                return match;
+            });
+
+            // Push the bundled HTML into the iframe via srcdoc
+            const iframe = document.getElementById("preview");
+            iframe.srcdoc = htmlContent;
+        }
+
+        // Initialize app
+        renderFileList();
+        openFile("index.js"); // Open JS by default to show it's there
+        openFile("index.html"); // Switch back to HTML to leave it active
+        runCode(); // Run automatically on load
 
     </script>
 </body>
