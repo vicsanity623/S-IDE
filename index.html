@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S•IDE • v0.0.2</title>
+    <title>S•IDE • v0.0.3</title>
 
-        <!-- PWA MANIFEST & SETTINGS -->
+    <!-- PWA MANIFEST & SETTINGS -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#050505">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -118,7 +118,7 @@
     <div id="toolbar">
         <div class="toolbar-title">
             🛠️ S•IDE
-            <span class="version-badge">v0.0.2</span>
+            <span class="version-badge">v0.0.3</span>
         </div>
         <div class="btn-group">
             <button class="btn btn-outline" onclick="exportZip()">📦 Export ZIP</button>
@@ -165,9 +165,9 @@
     </div>
 
     <script>
-        // 1. Initial Default State
+        // 1. Initial Default State (Fixed escape sequence)
         const defaultFiles = {
-            "index.html": `<canvas id="game"></canvas>\n<script src="index.js"><\\/script>`,
+            "index.html": "<canvas id=\"game\"></canvas>\n<script src=\"index.js\"><\/script>",
             "index.js": `const BACKGROUND = "#101010"
 const FOREGROUND = "#50FF50"
 
@@ -256,10 +256,6 @@ function frame() {
   angle += Math.PI*dt;
   clear()
   
-  //for (const v of vs) {
-  //  point(screen(project(translate_z(rotate_xz(v, angle), dz))))
-  //}
-  
   for (const f of fs) {
     for (let i = 0; i < f.length; ++i) {
       const a = vs[f[i]];
@@ -305,7 +301,7 @@ setTimeout(frame, 1000/FPS);`,
             if(confirm("Are you sure you want to reset? This will delete all your current code!")) {
                 localStorage.removeItem("sandboxIDE_files");
                 files = { ...defaultFiles };
-                openFile("index.html");
+                openFile("index.js"); // Opens JS by default on reset
                 runCode();
             }
         }
