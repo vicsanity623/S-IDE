@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sandbox-ide-v0.0.1';
+const CACHE_NAME = 'sandbox-ide-v0.0.2';
 
 // URLs to cache for true offline capabilities
 const urlsToCache = [
