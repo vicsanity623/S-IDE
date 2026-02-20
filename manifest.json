@@ -1,19 +1,19 @@
 {
-  "name": "DevQuest",
-  "short_name": "DevQuest",
-  "start_url": "index.html",
+  "name": "Sandbox IDE",
+  "short_name": "SandboxIDE",
+  "description": "A lightweight, zero-config browser workstation for web development.",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "scope": "./",
-    "icons": [
+  "background_color": "#1e1e2e",
+  "theme_color": "#050505",
+  "icons": [
     {
-      "src": "icon-192.png",
+      "src": "SIDE.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "SIDE.png",
       "sizes": "512x512",
       "type": "image/png"
     }
